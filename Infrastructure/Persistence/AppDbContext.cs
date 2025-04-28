@@ -13,6 +13,7 @@ namespace Infrastructure.Persistence
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+
         public DbSet<Payment> Payments { get; set; }
         public DbSet<PaymentMethod> PaymentMethods { get; set; }
         public DbSet<PaymentStatus> PaymentStatuses { get; set; }
@@ -20,6 +21,20 @@ namespace Infrastructure.Persistence
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<PaymentStatus>(entity =>
+            {
+                entity.ToTable("PaymentMethod");
+                entity.HasKey(p => p.Id);
+                entity.Property(p => p.Name).HasColumnType("varchar(25)").IsRequired();
+            });
+
+            modelBuilder.Entity<PaymentMethod>(entity =>
+            {
+                entity.ToTable("PaymentMethod");
+                entity.HasKey(p => p.Id);
+                entity.Property(p => p.Name).HasColumnType("varchar(25)").IsRequired();
+            });
+
             modelBuilder.Entity<Payment>(entity =>
             {
                 entity.ToTable("Payment");
@@ -28,6 +43,7 @@ namespace Infrastructure.Persistence
                 entity.Property(p => p.Amount).HasColumnType("varchar(255)").IsRequired();
                 //relacion con Reservation
                 /*
+                 
                  */
                 //relacion con PaymentMethod
                 entity.HasOne(p => p.PaymentMethod)
@@ -39,20 +55,6 @@ namespace Infrastructure.Persistence
                 .WithMany(ps => ps.Payments)
                 .HasForeignKey(p => p.PaymentStatusId).IsRequired();
                 //.OnDelete(DeleteBehavior.Restrict);
-            });
-
-            modelBuilder.Entity<PaymentMethod>(entity =>
-            {
-                entity.ToTable("PaymentMethod");
-                entity.HasKey(p => p.Id);
-                entity.Property(p => p.Name).HasColumnType("varchar(25)").IsRequired();
-            });
-
-            modelBuilder.Entity<PaymentStatus>(entity =>
-            {
-                entity.ToTable("PaymentMethod");
-                entity.HasKey(p => p.Id);
-                entity.Property(p => p.Name).HasColumnType("varchar(25)").IsRequired();
             });
         }
     }

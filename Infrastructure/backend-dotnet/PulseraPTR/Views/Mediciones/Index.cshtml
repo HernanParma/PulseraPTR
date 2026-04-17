@@ -1,0 +1,146 @@
+@model IReadOnlyList<MedicionDto>
+@{
+    ViewData["Title"] = "Mediciones";
+    var pacientes = ViewBag.Pacientes as IReadOnlyList<PacienteDto> ?? Array.Empty<PacienteDto>();
+    int? filtroPaciente = ViewBag.PacienteId as int?;
+    string? filtroDesde = ViewBag.FechaDesde as string;
+    string? filtroHasta = ViewBag.FechaHasta as string;
+    var filtroEstado = ViewBag.Estado as EstadoClinico?;
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h3 mb-0">Mediciones</h1>
+        <p class="text-muted mb-0">Listado completo con filtros</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index">Limpiar filtros</a>
+</div>
+
+<form class="card shadow-sm mb-3" method="get">
+    <div class="card-body row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Paciente</label>
+            <select class="form-select" name="pacienteId">
+                <option value="">Todos</option>
+                @foreach (var p in pacientes)
+                {
+                    if (filtroPaciente == p.Id)
+                    {
+                        <option value="@p.Id" selected>@p.Nombre</option>
+                    }
+                    else
+                    {
+                        <option value="@p.Id">@p.Nombre</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Desde</label>
+            <input class="form-control" type="datetime-local" name="fechaDesde" value="@filtroDesde" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Hasta</label>
+            <input class="form-control" type="datetime-local" name="fechaHasta" value="@filtroHasta" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Estado</label>
+            <select class="form-select" name="estado">
+                <option value="">Todos</option>
+                @foreach (EstadoClinico e in Enum.GetValues(typeof(EstadoClinico)))
+                {
+                    if (filtroEstado == e)
+                    {
+                        <option value="@e" selected>@e</option>
+                    }
+                    else
+                    {
+                        <option value="@e">@e</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-1 d-grid">
+            <button class="btn btn-primary" type="submit">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <span>Resultados (@Model.Count)</span>
+        <span class="text-muted small">Se muestran todas las mediciones que coinciden con el filtro</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Id</th>
+                    <th>Fecha y hora</th>
+                    <th>Paciente</th>
+                    <th>FC (lpm)</th>
+                    <th>Estado</th>
+                    <th>Fuera de rango</th>
+                    <th>Origen</th>
+                    <th>Mensaje</th>
+                    <th class="text-end" style="width:1%">Eliminar</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var m in Model)
+            {
+                <tr>
+                    <td>@m.Id</td>
+                    <td class="text-nowrap">@m.FechaHora.ToString("g")</td>
+                    <td>@m.PacienteNombre</td>
+                    <td>@m.FrecuenciaCardiaca</td>
+                    <td><span class="badge badge-estado-@m.Estado">@m.Estado</span></td>
+                    <td>
+                        @if (m.EsFueraDeRango)
+                        {
+                            <span class="badge bg-warning text-dark">Sí</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">No</span>
+                        }
+                    </td>
+                    <td>@m.OrigenDato</td>
+                    <td>@(m.MensajeAlerta ?? "-")</td>
+                    <td class="text-end">
+                        <form asp-action="Delete" asp-route-id="@m.Id" method="post" class="d-inline"
+                              onsubmit="return confirm('¿Eliminar esta medición de forma permanente?');">
+                            @Html.AntiForgeryToken()
+                            @if (filtroPaciente.HasValue)
+                            {
+                                <input type="hidden" name="pacienteId" value="@filtroPaciente.Value" />
+                            }
+                            @if (!string.IsNullOrEmpty(filtroDesde))
+                            {
+                                <input type="hidden" name="fechaDesde" value="@filtroDesde" />
+                            }
+                            @if (!string.IsNullOrEmpty(filtroHasta))
+                            {
+                                <input type="hidden" name="fechaHasta" value="@filtroHasta" />
+                            }
+                            @if (filtroEstado.HasValue)
+                            {
+                                <input type="hidden" name="estado" value="@filtroEstado.Value" />
+                            }
+                            <button type="submit" class="btn btn-sm btn-link btn-icon-borrar p-0 border-0" title="Eliminar medición" aria-label="Eliminar medición">
+                                <i class="bi bi-trash fs-5"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.pulseraRealtimeReload = () => window.location.reload();
+    </script>
+}

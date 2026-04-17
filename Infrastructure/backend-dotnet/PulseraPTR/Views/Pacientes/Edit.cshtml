@@ -1,0 +1,45 @@
+@model ActualizarPacienteDto
+@{
+    ViewData["Title"] = "Editar paciente";
+    var id = (int)ViewBag.Id;
+}
+
+<h1 class="h3 mb-3">Editar paciente</h1>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form asp-action="Edit" asp-route-id="@id" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div class="mb-3">
+                <label asp-for="Nombre" class="form-label"></label>
+                <input asp-for="Nombre" class="form-control" />
+                <span asp-validation-for="Nombre" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Edad" class="form-label"></label>
+                <input asp-for="Edad" class="form-control" type="number" />
+                <span asp-validation-for="Edad" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Dni" class="form-label"></label>
+                <input asp-for="Dni" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="ContactoEmergencia" class="form-label"></label>
+                <input asp-for="ContactoEmergencia" class="form-control" />
+                <span asp-validation-for="ContactoEmergencia" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Observaciones" class="form-label"></label>
+                <textarea asp-for="Observaciones" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            <a class="btn btn-link" asp-action="Index">Volver</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

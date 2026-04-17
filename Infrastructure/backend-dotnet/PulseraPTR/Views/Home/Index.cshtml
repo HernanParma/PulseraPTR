@@ -1,0 +1,152 @@
+@model DashboardResumenDto
+@{
+    ViewData["Title"] = "Panel principal";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h3 mb-0">Panel principal</h1>
+        <p class="text-muted mb-0">Resumen operativo y últimos eventos</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card card-metric h-100">
+            <div class="card-body">
+                <div class="text-muted small">Pacientes activos</div>
+                <div class="display-6 fw-semibold text-primary">@Model.CantidadPacientesActivos</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-metric h-100">
+            <div class="card-body">
+                <div class="text-muted small">Alertas sin leer</div>
+                <div class="display-6 fw-semibold text-warning">@Model.CantidadAlertasActivas</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-metric h-100">
+            <div class="card-body">
+                <div class="text-muted small">SOS pendientes</div>
+                <div class="display-6 fw-semibold text-danger">@Model.CantidadEventosSOSPendientes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-metric h-100">
+            <div class="card-body">
+                <div class="text-muted small">Mediciones fuera de rango</div>
+                <div class="display-6 fw-semibold text-secondary">@Model.CantidadMedicionesFueraDeRango</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-semibold">Últimas alertas</div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Paciente</th>
+                            <th>Estado</th>
+                            <th>Mensaje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var a in Model.UltimasAlertas)
+                    {
+                        <tr>
+                            <td class="text-nowrap">@a.FechaHora.ToString("g")</td>
+                            <td>@a.PacienteNombre</td>
+                            <td><span class="badge badge-estado-@a.Estado">@a.Estado</span></td>
+                            <td>@a.Mensaje</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-semibold">Últimos eventos SOS</div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Paciente</th>
+                            <th>Atendido</th>
+                            <th>Mensaje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var e in Model.UltimosEventosSos)
+                    {
+                        <tr>
+                            <td class="text-nowrap">@e.FechaHora.ToString("g")</td>
+                            <td>@e.PacienteNombre</td>
+                            <td>@(e.Atendido ? "Sí" : "No")</td>
+                            <td>@e.Mensaje</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Pacientes y estado actual</span>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Mediciones" asp-action="Index">Ver todas las mediciones</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Paciente</th>
+                    <th>Estado actual</th>
+                    <th>Última medición</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model.EstadoActualPorPaciente)
+            {
+                <tr>
+                    <td>@p.Nombre</td>
+                    <td>
+                        @if (p.EstadoActual is null)
+                        {
+                            <span class="badge bg-secondary">Sin mediciones</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-estado-@p.EstadoActual">@p.EstadoActual</span>
+                        }
+                    </td>
+                    <td>@(p.UltimaMedicionFechaHora?.ToString("g") ?? "-")</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" asp-controller="Pacientes" asp-action="Details" asp-route-id="@p.PacienteId">Detalle</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.pulseraRealtimeReload = () => window.location.reload();
+    </script>
+}

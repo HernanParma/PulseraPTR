@@ -1,0 +1,72 @@
+@model IReadOnlyList<PacienteDto>
+@{
+    ViewData["Title"] = "Pacientes";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h3 mb-0">Pacientes</h1>
+        <p class="text-muted mb-0">Administración y estado resumido</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create">Nuevo paciente</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Edad</th>
+                    <th>DNI</th>
+                    <th>Contacto emergencia</th>
+                    <th>Activo</th>
+                    <th>Estado actual</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr class="@(!p.Activo ? "table-secondary" : null)">
+                    <td>@p.Nombre</td>
+                    <td>@p.Edad</td>
+                    <td>@(p.Dni ?? "-")</td>
+                    <td>@p.ContactoEmergencia</td>
+                    <td>
+                        @if (p.Activo)
+                        {
+                            <span class="badge bg-success">Sí</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">No</span>
+                        }
+                    </td>
+                    <td>
+                        @if (p.EstadoActual is null)
+                        {
+                            <span class="badge bg-secondary">Sin datos</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-estado-@p.EstadoActual">@p.EstadoActual</span>
+                        }
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@p.Id">Detalle</a>
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@p.Id">Editar</a>
+                        @if (p.Activo)
+                        {
+                            <form asp-action="Delete" asp-route-id="@p.Id" method="post" class="d-inline" onsubmit="return confirm('¿Dar de baja lógica a este paciente?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Baja</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

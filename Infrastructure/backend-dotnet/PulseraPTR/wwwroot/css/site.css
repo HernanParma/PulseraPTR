@@ -1,0 +1,31 @@
+.card-metric {
+  border: 0;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(15, 23, 42, 0.08);
+}
+
+.table thead th {
+  white-space: nowrap;
+}
+
+.badge-estado-NORMAL {
+  background-color: #198754;
+}
+
+.badge-estado-ADVERTENCIA {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-estado-CRITICO {
+  background-color: #dc3545;
+}
+
+.btn-icon-borrar {
+  color: #6c757d;
+  padding: 0.25rem 0.4rem;
+}
+
+.btn-icon-borrar:hover {
+  color: #dc3545;
+}

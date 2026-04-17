@@ -1,61 +1,37 @@
 ﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Infrastructure.Persistence
+namespace Infrastructure.Persistence;
+
+public class AppDbContext : DbContext
 {
-    public class AppDbContext : DbContext
-    {       
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
 
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    public DbSet<Paciente> Pacientes => Set<Paciente>();
+    public DbSet<Medicion> Mediciones => Set<Medicion>();
+    public DbSet<EventoEmergencia> EventosEmergencia => Set<EventoEmergencia>();
+    public DbSet<Alerta> Alertas => Set<Alerta>();
 
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-        public DbSet<Payment> Payments { get; set; }
-        public DbSet<PaymentMethod> PaymentMethods { get; set; }
-        public DbSet<PaymentStatus> PaymentStatuses { get; set; }
-
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<PaymentStatus>(entity =>
+        // Paciente técnico fijo (Id=22) para integración Android / tiempo real.
+        // Se aplica vía migración (HasData); no se duplica al re-ejecutar la app, solo al aplicar migraciones pendientes.
+        modelBuilder.Entity<Paciente>().HasData(
+            new Paciente
             {
-                entity.ToTable("PaymentMethod");
-                entity.HasKey(p => p.Id);
-                entity.Property(p => p.Name).HasColumnType("varchar(25)").IsRequired();
+                Id = 22,
+                Nombre = "Reloj en tiempo real",
+                Edad = 1,
+                Dni = null,
+                ContactoEmergencia = "N/A (paciente técnico)",
+                Observaciones = "Paciente técnico para integración con app Android en tiempo real",
+                Activo = true
             });
 
-            modelBuilder.Entity<PaymentMethod>(entity =>
-            {
-                entity.ToTable("PaymentMethod");
-                entity.HasKey(p => p.Id);
-                entity.Property(p => p.Name).HasColumnType("varchar(25)").IsRequired();
-            });
-
-            modelBuilder.Entity<Payment>(entity =>
-            {
-                entity.ToTable("Payment");
-                entity.HasKey(p => p.PaymentId);
-                entity.Property(p => p.Date).IsRequired();
-                entity.Property(p => p.Amount).HasColumnType("varchar(255)").IsRequired();
-                //relacion con Reservation
-                /*
-                 
-                 */
-                //relacion con PaymentMethod
-                entity.HasOne(p => p.PaymentMethod)
-                .WithMany(pm => pm.Payments)
-                .HasForeignKey(p => p.PaymentMethodId).IsRequired();
-                //.OnDelete(DeleteBehavior.Restrict);
-                //relacion con PaymentStatus
-                entity.HasOne(p => p.PaymentStatus)
-                .WithMany(ps => ps.Payments)
-                .HasForeignKey(p => p.PaymentStatusId).IsRequired();
-                //.OnDelete(DeleteBehavior.Restrict);
-            });
-        }
+        base.OnModelCreating(modelBuilder);
     }
 }

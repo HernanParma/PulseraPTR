@@ -1,0 +1,107 @@
+@model IReadOnlyList<EventoEmergenciaDto>
+@{
+    ViewData["Title"] = "Eventos SOS";
+    var pacientes = ViewBag.Pacientes as IReadOnlyList<PacienteDto> ?? Array.Empty<PacienteDto>();
+    int? filtroPaciente = ViewBag.PacienteId as int?;
+    bool? filtroAtendido = ViewBag.Atendido as bool?;
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h3 mb-0">Eventos SOS</h1>
+        <p class="text-muted mb-0">Emergencias manuales registradas desde la pulsera</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index">Limpiar filtros</a>
+</div>
+
+<form class="card shadow-sm mb-3" method="get">
+    <div class="card-body row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Paciente</label>
+            <select class="form-select" name="pacienteId">
+                <option value="">Todos</option>
+                @foreach (var p in pacientes)
+                {
+                    if (filtroPaciente == p.Id)
+                    {
+                        <option value="@p.Id" selected>@p.Nombre</option>
+                    }
+                    else
+                    {
+                        <option value="@p.Id">@p.Nombre</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Atendido</label>
+            <select class="form-select" name="atendido">
+                <option value="">Todos</option>
+                @if (filtroAtendido == true)
+                {
+                    <option value="true" selected>Sí</option>
+                }
+                else
+                {
+                    <option value="true">Sí</option>
+                }
+                @if (filtroAtendido == false)
+                {
+                    <option value="false" selected>No</option>
+                }
+                else
+                {
+                    <option value="false">No</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2 d-grid">
+            <button class="btn btn-primary" type="submit">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">Resultados (@Model.Count)</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Paciente</th>
+                    <th>Estado</th>
+                    <th>Atendido</th>
+                    <th>Mensaje</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var e in Model)
+            {
+                <tr>
+                    <td class="text-nowrap">@e.FechaHora.ToString("g")</td>
+                    <td>@e.PacienteNombre</td>
+                    <td><span class="badge badge-estado-@e.Estado">@e.Estado</span></td>
+                    <td>@(e.Atendido ? "Sí" : "No")</td>
+                    <td>@e.Mensaje</td>
+                    <td class="text-end">
+                        @if (!e.Atendido)
+                        {
+                            <form asp-action="MarcarAtendido" asp-route-id="@e.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-success">Marcar atendido</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.pulseraRealtimeReload = () => window.location.reload();
+    </script>
+}

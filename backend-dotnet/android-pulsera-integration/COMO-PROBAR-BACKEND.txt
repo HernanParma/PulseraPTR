@@ -1,0 +1,50 @@
+================================================================================
+CÓMO PROBAR LOS POST DESDE LA PC (mismo backend que verá el teléfono)
+================================================================================
+
+1) Asegurate que el backend esté corriendo:
+   dotnet run --project PulseraPTR\Template.csproj
+
+2) Abrí el firewall de Windows para el puerto HTTP (ej. 5093):
+   - Panel de control → Firewall → Reglas de entrada → Nuevo → Puerto → TCP 5093 → Permitir
+   O desde PowerShell (admin), ejemplo:
+   New-NetFirewallRule -DisplayName "PulseraPTR HTTP" -Direction Inbound -Protocol TCP -LocalPort 5093 -Action Allow
+
+3) En el teléfono, Wi-Fi debe ser la MISMA red que la PC.
+
+4) En la PC, averiguá tu IP LAN:
+   ipconfig
+   (Adaptador Wi-Fi o Ethernet → IPv4, ej. 192.168.1.100)
+
+5) En NetworkingConfig.kt poné:
+   BASE_URL = "http://TU_IP:5093/"
+   (El puerto debe ser el que muestra la consola de Kestrel para HTTP.)
+
+6) Probar desde la PC con curl o PowerShell (sustituí IP/puerto/pacienteId):
+
+   Invoke-RestMethod -Method Post -Uri "http://localhost:5093/api/mediciones" `
+     -ContentType "application/json" `
+     -Body '{"pacienteId":1,"fechaHora":"2026-04-16T21:10:00","frecuenciaCardiaca":82,"estado":"NORMAL","mensajeAlerta":"Prueba","origenDato":"HealthConnect"}'
+
+7) Probar desde el TELÉFONO (navegador no sirve para POST sin app): usá la APK o Postman
+   en la misma Wi-Fi apuntando a http://TU_IP:5093/api/...
+
+8) Si usás HTTPS (7052) en el teléfono, necesitás certificado de desarrollo confiable
+   o usá solo HTTP en LAN con el perfil que expone el puerto 5093.
+
+================================================================================
+ÍNDICE DE ARCHIVOS EN android-pulsera-integration/
+================================================================================
+gradle/libs-retrofit.snippet.kts     → pegar en app/build.gradle.kts
+AndroidManifest-internet.xml         → recordatorio del permiso INTERNET
+INSTRUCCIONES-MAINACTIVITY.md         → snippets para MainActivity
+src/main/kotlin/com/pulseraptr/network/
+  NetworkingConfig.kt                → **CAMBIAR IP / puerto / pacienteId**
+  RetrofitClient.kt
+  PulseraRemoteRepository.kt
+  PulseraSyncCoordinator.kt
+  SyncOutcome.kt
+  BackendTime.kt
+  ClasificacionFc.kt un 
+  api/ApiService.kt
+  dto/*.kt

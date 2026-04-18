@@ -42,7 +42,8 @@ public class PacienteService : IPacienteService
         {
             var ultima = await _mediciones.GetUltimaPorPacienteAsync(p.Id, cancellationToken);
             var estado = ultima != null ? ultima.Estado : (EstadoClinico?)null;
-            resultado.Add(p.ToDto(estado, ultima?.FechaHora));
+            resultado.Add(p.ToDto(estado,
+                ultima is null ? null : PulseraMapper.ParaVisualizacionFechaHora(ultima.FechaHora)));
         }
 
         return resultado;
@@ -55,7 +56,8 @@ public class PacienteService : IPacienteService
             return null;
 
         var ultima = await _mediciones.GetUltimaPorPacienteAsync(id, cancellationToken);
-        return p.ToDto(ultima?.Estado, ultima?.FechaHora);
+        return p.ToDto(ultima?.Estado,
+            ultima is null ? null : PulseraMapper.ParaVisualizacionFechaHora(ultima.FechaHora));
     }
 
     public async Task<PacienteDetalleDto> ObtenerDetalleAsync(int id, CancellationToken cancellationToken = default)
@@ -79,7 +81,7 @@ public class PacienteService : IPacienteService
             Observaciones = p.Observaciones,
             Activo = p.Activo,
             EstadoActual = ultima?.Estado,
-            UltimaMedicionFechaHora = ultima?.FechaHora,
+            UltimaMedicionFechaHora = ultima is null ? null : PulseraMapper.ParaVisualizacionFechaHora(ultima.FechaHora),
             Mediciones = mediciones.OrderByDescending(m => m.FechaHora).Select(m => m.ToDto()).ToList(),
             Alertas = alertas.OrderByDescending(a => a.FechaHora).Select(a => a.ToDto()).ToList(),
             EventosSos = eventos.OrderByDescending(e => e.FechaHora).Select(e => e.ToDto()).ToList()

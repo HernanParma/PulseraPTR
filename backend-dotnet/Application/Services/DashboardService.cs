@@ -46,7 +46,7 @@ public class DashboardService : IDashboardService
                 PacienteId = p.Id,
                 Nombre = p.Nombre,
                 EstadoActual = ultima?.Estado.ToString(),
-                UltimaMedicionFechaHora = ultima?.FechaHora
+                UltimaMedicionFechaHora = ultima is null ? null : PulseraMapper.ParaVisualizacionFechaHora(ultima.FechaHora)
             });
         }
 

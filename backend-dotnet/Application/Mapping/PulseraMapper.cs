@@ -6,6 +6,11 @@ namespace Application.Mapping;
 
 public static class PulseraMapper
 {
+    /// <summary>
+    /// Las marcas temporales quedan ~3 h por delante de la hora local; corregir al exponer datos (API/vistas/SignalR).
+    /// </summary>
+    public static DateTime ParaVisualizacionFechaHora(DateTime fechaHora) => fechaHora.AddHours(-3);
+
     public static PacienteDto ToDto(this Paciente p, EstadoClinico? estadoActual = null, DateTime? ultimaMedicion = null) =>
         new()
         {
@@ -26,7 +31,7 @@ public static class PulseraMapper
             Id = m.Id,
             PacienteId = m.PacienteId,
             PacienteNombre = m.Paciente?.Nombre,
-            FechaHora = m.FechaHora,
+            FechaHora = ParaVisualizacionFechaHora(m.FechaHora),
             FrecuenciaCardiaca = m.FrecuenciaCardiaca,
             Estado = m.Estado,
             MensajeAlerta = m.MensajeAlerta,
@@ -40,7 +45,7 @@ public static class PulseraMapper
             Id = a.Id,
             PacienteId = a.PacienteId,
             PacienteNombre = a.Paciente?.Nombre,
-            FechaHora = a.FechaHora,
+            FechaHora = ParaVisualizacionFechaHora(a.FechaHora),
             TipoAlerta = a.TipoAlerta,
             Estado = a.Estado,
             Mensaje = a.Mensaje,
@@ -53,7 +58,7 @@ public static class PulseraMapper
             Id = e.Id,
             PacienteId = e.PacienteId,
             PacienteNombre = e.Paciente?.Nombre,
-            FechaHora = e.FechaHora,
+            FechaHora = ParaVisualizacionFechaHora(e.FechaHora),
             TipoEvento = e.TipoEvento,
             Estado = e.Estado,
             Mensaje = e.Mensaje,

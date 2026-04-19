@@ -1,24 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Infrastructure.csproj": {}
+    "D:\\PulseraPTR\\backend-dotnet\\Infrastructure.csproj": {}
   },
   "projects": {
-    "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Application\\Application.csproj": {
+    "D:\\PulseraPTR\\backend-dotnet\\Application\\Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Application\\Application.csproj",
+        "projectUniqueName": "D:\\PulseraPTR\\backend-dotnet\\Application\\Application.csproj",
         "projectName": "Application",
-        "projectPath": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Application\\Application.csproj",
-        "packagesPath": "C:\\Users\\herna\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Application\\obj\\",
+        "projectPath": "D:\\PulseraPTR\\backend-dotnet\\Application\\Application.csproj",
+        "packagesPath": "C:\\Users\\Gabriel\\.nuget\\packages\\",
+        "outputPath": "D:\\PulseraPTR\\backend-dotnet\\Application\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\herna\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\Gabriel\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -32,8 +28,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Domain\\Domain.csproj": {
-                "projectPath": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Domain\\Domain.csproj"
+              "D:\\PulseraPTR\\backend-dotnet\\Domain\\Domain.csproj": {
+                "projectPath": "D:\\PulseraPTR\\backend-dotnet\\Domain\\Domain.csproj"
               }
             }
           }
@@ -48,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -91,25 +87,21 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Domain\\Domain.csproj": {
+    "D:\\PulseraPTR\\backend-dotnet\\Domain\\Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Domain\\Domain.csproj",
+        "projectUniqueName": "D:\\PulseraPTR\\backend-dotnet\\Domain\\Domain.csproj",
         "projectName": "Domain",
-        "projectPath": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Domain\\Domain.csproj",
-        "packagesPath": "C:\\Users\\herna\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Domain\\obj\\",
+        "projectPath": "D:\\PulseraPTR\\backend-dotnet\\Domain\\Domain.csproj",
+        "packagesPath": "C:\\Users\\Gabriel\\.nuget\\packages\\",
+        "outputPath": "D:\\PulseraPTR\\backend-dotnet\\Domain\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\herna\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\Gabriel\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -135,7 +127,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -156,25 +148,21 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Infrastructure.csproj": {
+    "D:\\PulseraPTR\\backend-dotnet\\Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Infrastructure.csproj",
+        "projectUniqueName": "D:\\PulseraPTR\\backend-dotnet\\Infrastructure.csproj",
         "projectName": "Infrastructure",
-        "projectPath": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Infrastructure.csproj",
-        "packagesPath": "C:\\Users\\herna\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\obj\\",
+        "projectPath": "D:\\PulseraPTR\\backend-dotnet\\Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\Gabriel\\.nuget\\packages\\",
+        "outputPath": "D:\\PulseraPTR\\backend-dotnet\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\herna\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\Gabriel\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -188,11 +176,11 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Application\\Application.csproj": {
-                "projectPath": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Application\\Application.csproj"
+              "D:\\PulseraPTR\\backend-dotnet\\Application\\Application.csproj": {
+                "projectPath": "D:\\PulseraPTR\\backend-dotnet\\Application\\Application.csproj"
               },
-              "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Domain\\Domain.csproj": {
-                "projectPath": "C:\\Users\\herna\\Desktop\\pulseraPTR\\backend-dotnet\\Domain\\Domain.csproj"
+              "D:\\PulseraPTR\\backend-dotnet\\Domain\\Domain.csproj": {
+                "projectPath": "D:\\PulseraPTR\\backend-dotnet\\Domain\\Domain.csproj"
               }
             }
           }
@@ -207,7 +195,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -250,7 +238,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

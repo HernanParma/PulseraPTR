@@ -27,7 +27,7 @@ public static class PulseraMapper
             PacienteId = m.PacienteId,
             PacienteNombre = m.Paciente?.Nombre,
             FechaHora = m.FechaHora,
-            FrecuenciaCardiaca = m.FrecuenciaCardiaca,
+            FrecuenciaCardiaca = m.ValorMedicion,
             Estado = m.Estado,
             MensajeAlerta = m.MensajeAlerta,
             OrigenDato = m.OrigenDato,

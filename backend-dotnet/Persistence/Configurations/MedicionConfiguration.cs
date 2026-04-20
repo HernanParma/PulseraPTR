@@ -11,7 +11,7 @@ public class MedicionConfiguration : IEntityTypeConfiguration<Medicion>
         builder.ToTable("Mediciones");
         builder.HasKey(m => m.Id);
         builder.Property(m => m.FechaHora).IsRequired();
-        builder.Property(m => m.FrecuenciaCardiaca).IsRequired();
+        builder.Property(m => m.ValorMedicion).IsRequired();
         builder.Property(m => m.MensajeAlerta).HasMaxLength(1000);
         builder.Property(m => m.OrigenDato).HasMaxLength(100).IsRequired();
         builder.HasIndex(m => new { m.PacienteId, m.FechaHora });

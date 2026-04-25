@@ -38,3 +38,9 @@ C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\bin\Debug\net8.0\Domain.pdb
 C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\obj\Debug\net8.0\Infrastr.15EFFBFE.Up2Date
 C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\obj\Debug\net8.0\Infrastructure.genruntimeconfig.cache
 C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\obj\Debug\net8.0\ref\Infrastructure.dll
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Infrastructure.deps.json
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Infrastructure.runtimeconfig.json
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Infrastructure.dll
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Infrastructure.pdb
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Application.pdb
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Domain.pdb

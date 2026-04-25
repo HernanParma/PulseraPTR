@@ -12,12 +12,12 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-#if DEBUG
-builder.Configuration.AddUserSecrets<Program>();
-#endif
+// User-secrets (GlucoseEmailImport:Password, etc.): cargar en Development aunque la compilaciï¿½n sea Release.
+if (builder.Environment.IsDevelopment())
+    builder.Configuration.AddUserSecrets<Program>();
 
 builder.Services.AddPulseraInfrastructure(builder.Configuration);
-builder.Services.AddPulseraApplication();
+builder.Services.AddPulseraApplication(builder.Configuration);
 builder.Services.AddScoped<IPulseraRealtimeNotifier, PulseraRealtimeNotifier>();
 
 builder.Services.AddControllers()
@@ -76,9 +76,9 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionMiddleware>();
 
 // En Development NO redirigimos HTTP ? HTTPS: el perfil Kestrel expone HTTPS solo en localhost:7052
-// y HTTP en 0.0.0.0:5093. Si activamos UseHttpsRedirection aquí, el celular que entra por
+// y HTTP en 0.0.0.0:5093. Si activamos UseHttpsRedirection aquï¿½, el celular que entra por
 // http://192.168.x.x:5093 recibe un 307 a https://192.168.x.x:7052, donde no hay listener
-// (el certificado dev tampoco sirve bien en el teléfono). Para LAN + APK + Swagger usá HTTP 5093.
+// (el certificado dev tampoco sirve bien en el telï¿½fono). Para LAN + APK + Swagger usï¿½ HTTP 5093.
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();

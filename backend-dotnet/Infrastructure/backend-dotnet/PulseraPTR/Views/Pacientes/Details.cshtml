@@ -33,6 +33,79 @@
     <div class="col-12"><strong>Observaciones:</strong> @(Model.Observaciones ?? "-")</div>
 </div>
 
+@if (Model.Glucemia is not null)
+{
+    <div class="card shadow-sm mb-4 border-warning">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Panorama de glucemia</span>
+            <a class="btn btn-sm btn-outline-warning" asp-controller="Glucose" asp-action="Dashboard" asp-route-id="@Model.Id">Ver dashboard completo</a>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <div class="text-muted small">Última glucemia</div>
+                    <div class="fw-semibold">@(Model.Glucemia.LastReading is null ? "—" : $"{Model.Glucemia.LastReading.GlucoseMgDl} mg/dL")</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Promedio</div>
+                    <div class="fw-semibold">@(Model.Glucemia.AverageMgDl?.ToString("0") ?? "—") mg/dL</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Mín / Máx</div>
+                    <div class="fw-semibold">@(Model.Glucemia.MinMgDl?.ToString() ?? "—") / @(Model.Glucemia.MaxMgDl?.ToString() ?? "—")</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Hipo / Hiper</div>
+                    <div class="fw-semibold">@Model.Glucemia.HypoglycemiaCount / @Model.Glucemia.HyperglycemiaCount</div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha (UTC)</th>
+                            <th>Valor</th>
+                            <th>Rango</th>
+                            <th>Etiqueta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.Glucemia.RecentReadings.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="text-muted">Sin lecturas de glucemia todavía.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var r in Model.Glucemia.RecentReadings.Take(8))
+                        {
+                            var bandText = r.Band switch
+                            {
+                                GlucoseRangeBand.SevereHypoglycemia => "Hipoglucemia Severa",
+                                GlucoseRangeBand.Hypoglycemia => "Hipoglucemia",
+                                GlucoseRangeBand.Normal => "Normal",
+                                GlucoseRangeBand.Hyperglycemia => "Hiperglucemia",
+                                GlucoseRangeBand.SevereHyperglycemia => "Hiperglucemia Severa",
+                                GlucoseRangeBand.CriticalIsolated => "Crítico",
+                                _ => r.Band.ToString()
+                            };
+                            <tr>
+                                <td class="text-nowrap">@r.ReadingDateTimeUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td class="fw-semibold">@r.GlucoseMgDl mg/dL</td>
+                                <td>@bandText</td>
+                                <td>@(string.IsNullOrWhiteSpace(r.Label) ? "—" : r.Label)</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
 <div class="card shadow-sm mb-4">
     <div class="card-header bg-white fw-semibold">Historial de mediciones (@Model.Mediciones.Count)</div>
     <div class="table-responsive">

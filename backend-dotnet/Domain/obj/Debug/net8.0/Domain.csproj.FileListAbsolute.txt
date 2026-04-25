@@ -22,3 +22,9 @@ C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\Domain\obj\Debug\net8.0\Domain.
 C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\Domain\obj\Debug\net8.0\refint\Domain.dll
 C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\Domain\obj\Debug\net8.0\Domain.pdb
 C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\Domain\obj\Debug\net8.0\ref\Domain.dll
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\app-out\Domain.deps.json
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\app-out\Domain.dll
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\app-out\Domain.pdb
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Domain.deps.json
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Domain.dll
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Domain.pdb

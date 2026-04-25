@@ -31,6 +31,8 @@ import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.pulseraptr.network.NetworkingConfig
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -163,6 +165,85 @@ suspend fun enviarSosAlBackend(): Pair<Boolean, String> = withContext(Dispatcher
     }
 }
 
+/** Intervalo entre lecturas automáticas en segundo plano (mismo flujo que el botón manual). */
+private const val INTERVALO_LECTURA_FC_MS = 5 * 60 * 1000L
+
+/**
+ * Lee la última FC en Health Connect y envía al backend. Actualiza textos vía lambdas (thread-safe con estados de Compose).
+ */
+private suspend fun leerYEnviarFrecuenciaCardiaca(
+    client: HealthConnectClient,
+    permissions: Set<String>,
+    horaActual: () -> String,
+    historial: MutableList<String>,
+    onHeartRateText: (String) -> Unit,
+    onEstado: (String) -> Unit,
+    onAlerta: (String) -> Unit,
+    onUltimoEvento: (String) -> Unit,
+) {
+    try {
+        val granted = client.permissionController.getGrantedPermissions()
+        if (!granted.containsAll(permissions)) {
+            onHeartRateText("No se puede leer FC")
+            onUltimoEvento("Falta permiso de frecuencia cardíaca")
+            historial.add(0, "${horaActual()} - Falló lectura: permiso no otorgado")
+            return
+        }
+
+        val response = client.readRecords(
+            ReadRecordsRequest(
+                recordType = HeartRateRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(
+                    Instant.now().minus(30, ChronoUnit.DAYS),
+                    Instant.now()
+                )
+            )
+        )
+
+        val records = response.records
+        if (records.isEmpty()) {
+            onHeartRateText("Sin datos de FC")
+            onUltimoEvento("Health Connect no devolvió registros")
+            historial.add(0, "${horaActual()} - Falló lectura: no hay registros de FC")
+            return
+        }
+
+        val ultimo = records.last()
+        val sample = ultimo.samples.lastOrNull()
+        if (sample == null) {
+            onHeartRateText("Registro vacío")
+            onUltimoEvento("El registro existe pero no tiene muestras")
+            historial.add(0, "${horaActual()} - Falló lectura: registro sin muestras")
+            return
+        }
+
+        val bpm = sample.beatsPerMinute.toLong()
+        val nuevoEstado = clasificarEstadoFrecuenciaCardiaca(bpm)
+        val mensajeAlerta = generarMensajeAlerta(bpm)
+
+        onHeartRateText("$bpm bpm")
+        onEstado(nuevoEstado)
+        onAlerta(mensajeAlerta)
+        onUltimoEvento("Lectura de FC obtenida")
+
+        historial.add(
+            0,
+            "${horaActual()} - FC: $bpm bpm / Estado: $nuevoEstado / $mensajeAlerta"
+        )
+
+        val (ok, mensaje) = enviarMedicionAlBackend(
+            frecuenciaCardiaca = bpm,
+            estado = nuevoEstado,
+            mensajeAlerta = mensajeAlerta
+        )
+        historial.add(0, "${horaActual()} - ${if (ok) "✓" else "✗"} $mensaje")
+    } catch (e: Exception) {
+        onHeartRateText("Error al leer Health Connect")
+        onUltimoEvento(e.message ?: "Error desconocido")
+        historial.add(0, "${horaActual()} - Error leyendo Health Connect")
+    }
+}
+
 @Composable
 fun PantallaPrincipal(
     sdkStatus: Int,
@@ -186,11 +267,14 @@ fun PantallaPrincipal(
         HealthPermission.getReadPermission(HeartRateRecord::class)
     )
 
+    var permisosFcListos by remember { mutableStateOf(false) }
+
     val permissionLauncher =
         rememberLauncherForActivityResult(
             PermissionController.createRequestPermissionResultContract()
         ) { granted ->
-            if (permissions.all { it in granted }) {
+            permisosFcListos = permissions.all { it in granted }
+            if (permisosFcListos) {
                 ultimoEvento = "Permiso de frecuencia cardíaca otorgado"
                 historial.add(0, "${horaActual()} - Permiso Health Connect otorgado")
             } else {
@@ -198,6 +282,38 @@ fun PantallaPrincipal(
                 historial.add(0, "${horaActual()} - Permiso Health Connect denegado")
             }
         }
+
+    /** Al abrir: si ya hay permisos, marcar listo; si no, pedirlos solos (sin pulsar botón). */
+    LaunchedEffect(sdkStatus) {
+        if (sdkStatus != HealthConnectClient.SDK_AVAILABLE) return@LaunchedEffect
+        delay(400)
+        val client = clientProvider()
+        val granted = client.permissionController.getGrantedPermissions()
+        if (permissions.all { it in granted }) {
+            permisosFcListos = true
+        } else {
+            permissionLauncher.launch(permissions)
+        }
+    }
+
+    /** Con permisos: lectura inicial y repetición cada [INTERVALO_LECTURA_FC_MS]. */
+    LaunchedEffect(permisosFcListos, sdkStatus) {
+        if (sdkStatus != HealthConnectClient.SDK_AVAILABLE || !permisosFcListos) return@LaunchedEffect
+        val client = clientProvider()
+        while (isActive) {
+            leerYEnviarFrecuenciaCardiaca(
+                client = client,
+                permissions = permissions,
+                horaActual = ::horaActual,
+                historial = historial,
+                onHeartRateText = { heartRateText = it },
+                onEstado = { estado = it },
+                onAlerta = { alertaActual = it },
+                onUltimoEvento = { ultimoEvento = it },
+            )
+            delay(INTERVALO_LECTURA_FC_MS)
+        }
+    }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -257,106 +373,38 @@ fun PantallaPrincipal(
 
             when (sdkStatus) {
                 HealthConnectClient.SDK_AVAILABLE -> {
+                    Text(
+                        text = "FC: lectura automática al abrir y cada ${INTERVALO_LECTURA_FC_MS / 60_000} min.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = {
                             permissionLauncher.launch(permissions)
                         }
                     ) {
-                        Text("Conectar Health Connect")
+                        Text("Permisos Health Connect")
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
+                    Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = {
                             scope.launch {
-                                try {
-                                    val client = clientProvider()
-
-                                    val granted = client.permissionController.getGrantedPermissions()
-
-                                    if (!granted.containsAll(permissions)) {
-                                        heartRateText = "No se puede leer FC"
-                                        ultimoEvento = "Falta permiso de frecuencia cardíaca"
-                                        historial.add(
-                                            0,
-                                            "${horaActual()} - Falló lectura: permiso no otorgado"
-                                        )
-                                        return@launch
-                                    }
-
-                                    val response = client.readRecords(
-                                        ReadRecordsRequest(
-                                            recordType = HeartRateRecord::class,
-                                            timeRangeFilter = TimeRangeFilter.between(
-                                                Instant.now().minus(30, ChronoUnit.DAYS),
-                                                Instant.now()
-                                            )
-                                        )
-                                    )
-
-                                    val records = response.records
-
-                                    if (records.isEmpty()) {
-                                        heartRateText = "Sin datos de FC"
-                                        ultimoEvento = "Health Connect no devolvió registros"
-                                        historial.add(
-                                            0,
-                                            "${horaActual()} - Falló lectura: no hay registros de FC"
-                                        )
-                                        return@launch
-                                    }
-
-                                    val ultimo = records.last()
-                                    val sample = ultimo.samples.lastOrNull()
-
-                                    if (sample == null) {
-                                        heartRateText = "Registro vacío"
-                                        ultimoEvento = "El registro existe pero no tiene muestras"
-                                        historial.add(
-                                            0,
-                                            "${horaActual()} - Falló lectura: registro sin muestras"
-                                        )
-                                        return@launch
-                                    }
-
-                                    val bpm = sample.beatsPerMinute.toLong()
-                                    val nuevoEstado = clasificarEstadoFrecuenciaCardiaca(bpm)
-                                    val mensajeAlerta = generarMensajeAlerta(bpm)
-
-                                    heartRateText = "$bpm bpm"
-                                    estado = nuevoEstado
-                                    alertaActual = mensajeAlerta
-                                    ultimoEvento = "Lectura de FC obtenida"
-
-                                    historial.add(
-                                        0,
-                                        "${horaActual()} - FC: $bpm bpm / Estado: $nuevoEstado / $mensajeAlerta"
-                                    )
-
-                                    val (ok, mensaje) = enviarMedicionAlBackend(
-                                        frecuenciaCardiaca = bpm,
-                                        estado = nuevoEstado,
-                                        mensajeAlerta = mensajeAlerta
-                                    )
-
-                                    historial.add(
-                                        0,
-                                        "${horaActual()} - ${if (ok) "✓" else "✗"} $mensaje"
-                                    )
-
-                                } catch (e: Exception) {
-                                    heartRateText = "Error al leer Health Connect"
-                                    ultimoEvento = e.message ?: "Error desconocido"
-                                    historial.add(
-                                        0,
-                                        "${horaActual()} - Error leyendo Health Connect"
-                                    )
-                                }
+                                val client = clientProvider()
+                                leerYEnviarFrecuenciaCardiaca(
+                                    client = client,
+                                    permissions = permissions,
+                                    horaActual = ::horaActual,
+                                    historial = historial,
+                                    onHeartRateText = { heartRateText = it },
+                                    onEstado = { estado = it },
+                                    onAlerta = { alertaActual = it },
+                                    onUltimoEvento = { ultimoEvento = it },
+                                )
                             }
                         }
                     ) {
-                        Text("Leer frecuencia cardíaca")
+                        Text("Leer ahora")
                     }
                 }
 

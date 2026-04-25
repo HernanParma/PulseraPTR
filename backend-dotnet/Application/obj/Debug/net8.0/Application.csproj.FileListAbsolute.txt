@@ -30,3 +30,9 @@ C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\Application\obj\Debug\net8.0\Ap
 C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\Application\obj\Debug\net8.0\refint\Application.dll
 C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\Application\obj\Debug\net8.0\Application.pdb
 C:\Users\herna\Desktop\pulseraPTR\backend-dotnet\Application\obj\Debug\net8.0\ref\Application.dll
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\app-out\Application.deps.json
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\app-out\Application.dll
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\app-out\Application.pdb
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Application.deps.json
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Application.dll
+c:\Users\herna\Desktop\pulseraPTR\backend-dotnet\.build-verify\infra-out\Application.pdb

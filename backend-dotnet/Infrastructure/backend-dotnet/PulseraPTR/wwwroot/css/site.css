@@ -29,3 +29,46 @@
 .btn-icon-borrar:hover {
   color: #dc3545;
 }
+
+.badge-glucose-severe-hypo {
+  background-color: #842029;
+  color: #fff;
+}
+
+.badge-glucose-hypo {
+  background-color: #fd7e14;
+  color: #212529;
+}
+
+.badge-glucose-normal {
+  background-color: #198754;
+  color: #fff;
+}
+
+.badge-glucose-hyper {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-glucose-severe-hyper {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.badge-glucose-critical {
+  background-color: #6f42c1;
+  color: #fff;
+}
+
+.label-badge-fasting {
+  background-color: #0d6efd;
+}
+
+.label-badge-before {
+  background-color: #0dcaf0;
+  color: #212529;
+}
+
+.label-badge-after {
+  background-color: #6610f2;
+}

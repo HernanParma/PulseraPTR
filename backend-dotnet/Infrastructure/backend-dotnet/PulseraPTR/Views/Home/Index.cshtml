@@ -38,8 +38,16 @@
     <div class="col-md-3">
         <div class="card card-metric h-100">
             <div class="card-body">
-                <div class="text-muted small">Mediciones fuera de rango</div>
+                <div class="text-muted small">FC fuera de rango</div>
                 <div class="display-6 fw-semibold text-secondary">@Model.CantidadMedicionesFueraDeRango</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-metric h-100 border-warning">
+            <div class="card-body">
+                <div class="text-muted small">Glucemias fuera de rango</div>
+                <div class="display-6 fw-semibold text-warning">@Model.CantidadGlucemiasFueraDeRango</div>
             </div>
         </div>
     </div>
@@ -101,6 +109,46 @@
                 </table>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-white fw-semibold">Últimas glucemias fuera de rango</div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Fecha (UTC)</th>
+                    <th>Paciente</th>
+                    <th>Valor</th>
+                    <th>Rango</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.UltimasGlucemiasFueraDeRango.Count == 0)
+            {
+                <tr>
+                    <td colspan="5" class="text-muted">Sin glucemias fuera de rango recientes.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var g in Model.UltimasGlucemiasFueraDeRango)
+                {
+                    <tr>
+                        <td class="text-nowrap">@g.FechaHoraUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@g.PacienteNombre</td>
+                        <td class="fw-semibold">@g.GlucosaMgDl mg/dL</td>
+                        <td>@g.BandaTexto</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-warning" asp-controller="Glucose" asp-action="Dashboard" asp-route-id="@g.PacienteId">Ver glucemia</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
     </div>
 </div>
 

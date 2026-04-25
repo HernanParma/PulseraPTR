@@ -92,6 +92,68 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("EventosEmergencia", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.GlucoseReading", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DateRaw")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("GlucoseMgDl")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImportHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("PacienteId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReadingDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceFileName")
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<string>("TimeRaw")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("TimeZone")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PacienteId", "ImportHash")
+                        .IsUnique();
+
+                    b.HasIndex("PacienteId", "ReadingDateTime");
+
+                    b.ToTable("GlucoseReadings", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.Medicion", b =>
                 {
                     b.Property<int>("Id")
@@ -205,6 +267,17 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("Paciente");
                 });
 
+            modelBuilder.Entity("Domain.Entities.GlucoseReading", b =>
+                {
+                    b.HasOne("Domain.Entities.Paciente", "Paciente")
+                        .WithMany("GlucoseReadings")
+                        .HasForeignKey("PacienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Paciente");
+                });
+
             modelBuilder.Entity("Domain.Entities.Medicion", b =>
                 {
                     b.HasOne("Domain.Entities.Paciente", "Paciente")
@@ -221,6 +294,8 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("Alertas");
 
                     b.Navigation("EventosEmergencia");
+
+                    b.Navigation("GlucoseReadings");
 
                     b.Navigation("Mediciones");
                 });

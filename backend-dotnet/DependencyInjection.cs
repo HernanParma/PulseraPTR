@@ -4,6 +4,7 @@ using Application.Interfaces.Repositories;
 using Infrastructure.Notifications;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories;
+using Infrastructure.Workers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,8 +26,11 @@ public static class DependencyInjection
         services.AddScoped<IMedicionRepository, MedicionRepository>();
         services.AddScoped<IAlertaRepository, AlertaRepository>();
         services.AddScoped<IEventoEmergenciaRepository, EventoEmergenciaRepository>();
+        services.AddScoped<IGlucoseReadingRepository, GlucoseReadingRepository>();
 
         services.AddScoped<INotificacionContactoEmergencia, LoggingNotificacionContactoEmergencia>();
+
+        services.AddHostedService<GlucoseEmailImportWorker>();
 
         return services;
     }

@@ -1,0 +1,87 @@
+@{
+    ViewData["Title"] = "Importar glucemia (mySugr)";
+    var pacientes = ViewBag.Pacientes as IReadOnlyList<PacienteDto> ?? Array.Empty<PacienteDto>();
+    var importResult = ViewBag.ImportResult as GlucoseImportResultDto;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-3">Importar CSV mySugr</h1>
+        <p class="text-muted">
+            Seleccioná el paciente y el archivo exportado desde mySugr. Las filas duplicadas (misma fecha/hora, valor y etiqueta) se omiten automáticamente.
+        </p>
+
+        @if (importResult is not null)
+        {
+            var hasErrors = importResult.Errors.Count > 0;
+            var alertClass = hasErrors ? "warning" : importResult.Imported > 0 ? "success" : importResult.Duplicates > 0 ? "info" : "secondary";
+            <div class="alert alert-@alertClass">
+                <div class="fw-semibold mb-2">Resultado de la importación</div>
+                <ul class="mb-2 small">
+                    <li><strong>Filas leídas:</strong> @importResult.RowsRead</li>
+                    <li><strong>Importadas:</strong> @importResult.Imported</li>
+                    <li><strong>Duplicadas</strong> (ya existían o repetidas en el archivo): @importResult.Duplicates</li>
+                    <li><strong>Descartadas</strong> (sin glucemia válida o fila inválida): @importResult.Discarded</li>
+                </ul>
+                @if (!hasErrors && importResult.Imported == 0 && importResult.Duplicates > 0)
+                {
+                    <p class="small mb-0">Todas las filas ya estaban importadas; no se crearon registros nuevos.</p>
+                }
+            </div>
+
+            @if (hasErrors)
+            {
+                <div class="alert alert-danger">
+                    <div class="fw-semibold mb-2">Errores y advertencias del archivo (@importResult.Errors.Count)</div>
+                    <ul class="mb-0 small" style="max-height: 280px; overflow-y: auto;">
+                        @foreach (var err in importResult.Errors)
+                        {
+                            <li class="text-break">@err</li>
+                        }
+                    </ul>
+                </div>
+            }
+        }
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="All" class="alert alert-danger py-2" role="alert"></div>
+        }
+
+        <form asp-action="Import" asp-controller="Glucose" method="post" enctype="multipart/form-data" class="card shadow-sm">
+            @Html.AntiForgeryToken()
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label" for="pacienteId">Paciente</label>
+                    <select name="pacienteId" id="pacienteId" class="form-select" required>
+                        @foreach (var p in pacientes)
+                        {
+                            <option value="@p.Id">@p.Nombre (ID @p.Id)</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="file">Archivo CSV</label>
+                    <input class="form-control" type="file" name="file" id="file" accept=".csv,text/csv" required />
+                </div>
+                <button type="submit" class="btn btn-primary">Importar</button>
+                <a class="btn btn-outline-secondary ms-2" asp-controller="Pacientes" asp-action="Index">Volver</a>
+            </div>
+        </form>
+
+        @if (pacientes.Count > 0)
+        {
+            <div class="mt-4">
+                <p class="small text-muted mb-1">Acceso rápido al dashboard por paciente:</p>
+                <ul class="list-unstyled small">
+                    @foreach (var p in pacientes.Take(15))
+                    {
+                        <li>
+                            <a asp-action="Dashboard" asp-controller="Glucose" asp-route-id="@p.Id">Dashboard — @p.Nombre</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</div>

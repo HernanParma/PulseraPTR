@@ -2,6 +2,7 @@ using Application.Dtos;
 using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Mapping;
+using Microsoft.Extensions.Options;
 using Domain.Enums;
 
 namespace Application.Services;
@@ -13,19 +14,25 @@ public class DashboardService : IDashboardService
     private readonly IAlertaRepository _alertas;
     private readonly IEventoEmergenciaRepository _eventos;
     private readonly IPacienteService _pacienteService;
+    private readonly IGlucoseReadingRepository _glucoseReadings;
+    private readonly Configuration.GlucoseAlertOptions _glucoseThresholds;
 
     public DashboardService(
         IPacienteRepository pacientes,
         IMedicionRepository mediciones,
         IAlertaRepository alertas,
         IEventoEmergenciaRepository eventos,
-        IPacienteService pacienteService)
+        IPacienteService pacienteService,
+        IGlucoseReadingRepository glucoseReadings,
+        IOptions<Configuration.GlucoseAlertOptions> glucoseThresholds)
     {
         _pacientes = pacientes;
         _mediciones = mediciones;
         _alertas = alertas;
         _eventos = eventos;
         _pacienteService = pacienteService;
+        _glucoseReadings = glucoseReadings;
+        _glucoseThresholds = glucoseThresholds.Value;
     }
 
     public async Task<DashboardResumenDto> ObtenerResumenAsync(CancellationToken cancellationToken = default)
@@ -34,6 +41,16 @@ public class DashboardService : IDashboardService
         var alertasActivas = await _alertas.ContarActivasAsync(cancellationToken);
         var sosPendientes = await _eventos.ContarSosPendientesAsync(cancellationToken);
         var fueraDeRango = await _mediciones.ContarFueraDeRangoAsync(cancellationToken);
+        var glucosasRecientes = await _glucoseReadings.GetRecentAcrossPatientsAsync(250, cancellationToken);
+        var glucosasFueraDeRango = glucosasRecientes
+            .Select(r => new
+            {
+                Reading = r,
+                Band = GlucoseReadingMapper.ClassifyBand(r.GlucoseMgDl, _glucoseThresholds)
+            })
+            .Where(x => x.Band != GlucoseRangeBand.Normal)
+            .ToList();
+        var cantidadGlucemiasFueraDeRango = glucosasFueraDeRango.Count;
 
         var pacientesActivos = await _pacientes.GetAllAsync(incluirInactivos: false, cancellationToken);
         var estadoPorPaciente = new List<EstadoPacienteResumenDto>();
@@ -59,9 +76,22 @@ public class DashboardService : IDashboardService
             CantidadAlertasActivas = alertasActivas,
             CantidadEventosSOSPendientes = sosPendientes,
             CantidadMedicionesFueraDeRango = fueraDeRango,
+            CantidadGlucemiasFueraDeRango = cantidadGlucemiasFueraDeRango,
             EstadoActualPorPaciente = estadoPorPaciente.OrderBy(e => e.Nombre).ToList(),
             UltimasAlertas = ultimasAlertas.Select(a => a.ToDto()).ToList(),
-            UltimosEventosSos = ultimosSos.Select(e => e.ToDto()).ToList()
+            UltimosEventosSos = ultimosSos.Select(e => e.ToDto()).ToList(),
+            UltimasGlucemiasFueraDeRango = glucosasFueraDeRango
+                .OrderByDescending(x => x.Reading.ReadingDateTime)
+                .Take(10)
+                .Select(x => new GlucemiaFueraDeRangoResumenDto
+                {
+                    PacienteId = x.Reading.PacienteId,
+                    PacienteNombre = x.Reading.Paciente?.Nombre ?? $"Paciente {x.Reading.PacienteId}",
+                    GlucosaMgDl = x.Reading.GlucoseMgDl,
+                    Banda = x.Band.ToString(),
+                    FechaHoraUtc = x.Reading.ReadingDateTime
+                })
+                .ToList()
         };
     }
 

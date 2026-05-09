@@ -67,7 +67,7 @@ public class MedicionService : IMedicionService
             {
                 PacienteId = dto.PacienteId,
                 FechaHora = dto.FechaHora,
-                TipoAlerta = TipoAlerta.FrecuenciaCardiaca,
+                TipoAlerta = TipoAlerta.SosAutomatico, //NOTE: quizas deberia ser TipoAlerta.Automatica para indicar que fue generada por el sistema?
                 Estado = entity.Estado,
                 Mensaje = entity.MensajeAlerta ?? "sin mensaje",
                 Leida = false

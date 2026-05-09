@@ -6,7 +6,7 @@ namespace Domain.Entities
     {
 
         public string Id { get; set; }
-        public TipoMedicion Tipo { get; set; }
+        public TipoMedicion TipoMedicion { get; set; }
         public int RangoEdadMinimo { get; set; }
         public int RangoEdadMaximo { get; set; }
         public int ValorNormalMinimo { get; set; }
@@ -23,7 +23,7 @@ namespace Domain.Entities
                             int valorCriticoMaximo)
         {
             Id = Guid.NewGuid().ToString();
-            Tipo = tipo;
+            TipoMedicion = tipo;
             RangoEdadMinimo = rangoEdadMinimo;
             RangoEdadMaximo = rangoEdadMaximo;
             ValorNormalMinimo = valorNormalMinimo;

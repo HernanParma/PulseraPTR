@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Medicion> Mediciones => Set<Medicion>();
     public DbSet<EventoEmergencia> EventosEmergencia => Set<EventoEmergencia>();
     public DbSet<Alerta> Alertas => Set<Alerta>();
+    public DbSet<RangoValoresMedicion> RangoValores => Set<RangoValoresMedicion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

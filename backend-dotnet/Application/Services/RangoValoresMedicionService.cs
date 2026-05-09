@@ -40,7 +40,7 @@ namespace Application.Services
         }
 
         private static RangoValoresMedicionDto MapToDto(RangoValoresMedicion rango) =>
-            new(rango.Tipo.ToString(),
+            new(rango.TipoMedicion.ToString(),
                 rango.RangoEdadMinimo,
                 rango.RangoEdadMaximo,
                 rango.ValorNormalMinimo,

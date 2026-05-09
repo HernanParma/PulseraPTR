@@ -2,6 +2,7 @@ using Application.Dtos;
 using Application.Interfaces;
 using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
+using PulseraPTR.Services;
 
 namespace PulseraPTR.Controllers.Api;
 
@@ -10,10 +11,13 @@ namespace PulseraPTR.Controllers.Api;
 public class MedicionesApiController : ControllerBase
 {
     private readonly IMedicionService _mediciones;
+    private readonly IRangoValoresMedicionService _rangos;
 
-    public MedicionesApiController(IMedicionService mediciones)
+    public MedicionesApiController(IMedicionService mediciones,
+                                   IRangoValoresMedicionService rangos)
     {
         _mediciones = mediciones;
+        _rangos = rangos;
     }
 
     [HttpPost]
@@ -42,5 +46,12 @@ public class MedicionesApiController : ControllerBase
     {
         await _mediciones.EliminarAsync(id, ct);
         return NoContent();
+    }
+
+    [HttpPost("rango-valores")]
+    public async Task<IActionResult> CargarRangoValores([FromBody] CrearRangoValoresMedicionDto dto)
+    {
+        var response = await _rangos.CrearRango(dto);
+        return Ok(response);
     }
 }

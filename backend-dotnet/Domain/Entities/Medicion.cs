@@ -23,4 +23,18 @@ public class Medicion
         EsFueraDeRango = estado == EstadoClinico.ADVERTENCIA
                       || estado == EstadoClinico.CRITICO;
     }
+
+    public static Medicion CrearMedicionBase(int pacienteId,
+                                             int Valor,
+                                             DateTime Fecha,
+                                             string? origen)
+    {
+        return new Medicion
+        {
+            PacienteId = pacienteId,
+            ValorMedicion = Valor,
+            FechaHora = Fecha,
+            OrigenDato = string.IsNullOrWhiteSpace(origen) ? "Desconocido" : origen.Trim(),
+        };
+    }
 }

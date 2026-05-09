@@ -15,7 +15,7 @@ public class MedicionService : IMedicionService
     private readonly IMedicionRepository _mediciones;
     private readonly IPacienteRepository _pacientes;
     private readonly IAlertaRepository _alertas;
-    private readonly IClasificacionEstadoCardiaco _clasificacion;
+    private readonly IClasificarEstadoClinico _clasificacion;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPulseraRealtimeNotifier _notifier;
     private readonly INotificacionContactoEmergencia _contactoEmergencia;
@@ -25,8 +25,8 @@ public class MedicionService : IMedicionService
         IMedicionRepository mediciones,
         IPacienteRepository pacientes,
         IAlertaRepository alertas,
-        IClasificacionEstadoCardiaco clasificacion,
         IUnitOfWork unitOfWork,
+        IClasificarEstadoClinico clasificacion,
         IPulseraRealtimeNotifier notifier,
         INotificacionContactoEmergencia contactoEmergencia,
         IConfiguration configuration)
@@ -34,8 +34,8 @@ public class MedicionService : IMedicionService
         _mediciones = mediciones;
         _pacientes = pacientes;
         _alertas = alertas;
-        _clasificacion = clasificacion;
         _unitOfWork = unitOfWork;
+        _clasificacion = clasificacion;
         _notifier = notifier;
         _contactoEmergencia = contactoEmergencia;
         _configuration = configuration;
@@ -49,38 +49,30 @@ public class MedicionService : IMedicionService
         if (!paciente.Activo)
             throw new InvalidOperationException("El paciente no está activo.");
 
-        var estadoCalculado = _clasificacion.CalcularPorFrecuenciaCardiaca(dto.FrecuenciaCardiaca);
-        var fuera = _clasificacion.EsFueraDeRango(estadoCalculado);
 
-        var mensaje = string.IsNullOrWhiteSpace(dto.MensajeAlerta)
-            ? _clasificacion.ObtenerMensajeSugerido(estadoCalculado, dto.FrecuenciaCardiaca)
-            : dto.MensajeAlerta.Trim();
+        var entity = Medicion.CrearMedicionBase(dto.PacienteId,
+                                                dto.Valor,
+                                                dto.FechaHora,
+                                                dto.OrigenDato);
 
-        var entity = new Medicion
-        {
-            PacienteId = dto.PacienteId,
-            FechaHora = dto.FechaHora,
-            ValorMedicion = dto.FrecuenciaCardiaca,
-            Estado = estadoCalculado,
-            MensajeAlerta = mensaje,
-            OrigenDato = string.IsNullOrWhiteSpace(dto.OrigenDato) ? "Desconocido" : dto.OrigenDato.Trim(),
-            EsFueraDeRango = fuera
-        };
+
+        await _clasificacion.ClasificarMedicion(entity);
 
         await _mediciones.AddAsync(entity, cancellationToken);
 
         Alerta? alertaGenerada = null;
-        if (fuera)
+        if (entity.EsFueraDeRango)
         {
             alertaGenerada = new Alerta
             {
                 PacienteId = dto.PacienteId,
                 FechaHora = dto.FechaHora,
                 TipoAlerta = TipoAlerta.FrecuenciaCardiaca,
-                Estado = estadoCalculado,
-                Mensaje = mensaje,
+                Estado = entity.Estado,
+                Mensaje = entity.MensajeAlerta ?? "sin mensaje",
                 Leida = false
             };
+
             await _alertas.AddAsync(alertaGenerada, cancellationToken);
         }
 
@@ -98,9 +90,9 @@ public class MedicionService : IMedicionService
 
             await NotificarContactoSiCorrespondeAsync(
                 paciente,
-                estadoCalculado,
-                mensaje,
-                dto.FrecuenciaCardiaca,
+                entity.Estado,
+                entity.MensajeAlerta  ?? "sin mensaje",
+                dto.Valor,
                 cancellationToken);
         }
 

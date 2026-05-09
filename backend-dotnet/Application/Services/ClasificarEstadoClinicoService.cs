@@ -6,19 +6,19 @@ namespace Application.Services
 {
     internal class ClasificarEstadoClinicoService : IClasificarEstadoClinico
     {
-        private readonly INivelNormalMedicionRepository _niveles;
+        private readonly IRangoValoresMedicionRepository _niveles;
         private readonly IPacienteRepository _pacientes;
 
-        public ClasificarEstadoClinicoService(INivelNormalMedicionRepository niveles,
+        public ClasificarEstadoClinicoService(IRangoValoresMedicionRepository niveles,
                                               IPacienteRepository pacientes)
         {
             _niveles = niveles;
             _pacientes = pacientes;
         }
 
-        public async Task ClasificarEstado(Medicion medicion)
+        public async Task ClasificarMedicion(Medicion medicion)
         {
-            var nivelesNormales = await _niveles.GetValoresNormalPorTipoMedicion(medicion.Tipo);
+            var nivelesNormales = await _niveles.GetRangoSegunTipoMedicion(medicion.Tipo);
             var paciente = await _pacientes.GetByIdAsync(medicion.PacienteId);
 
 

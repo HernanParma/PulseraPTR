@@ -79,6 +79,7 @@
                     <th>Fecha y hora</th>
                     <th>Paciente</th>
                     <th>FC (lpm)</th>
+                    <th>Pasos</th>
                     <th>Estado</th>
                     <th>Fuera de rango</th>
                     <th>Origen</th>
@@ -94,6 +95,7 @@
                     <td class="text-nowrap">@m.FechaHora.ToString("g")</td>
                     <td>@m.PacienteNombre</td>
                     <td>@m.FrecuenciaCardiaca</td>
+                    <td>@(m.PasosActividad?.ToString() ?? "-")</td>
                     <td><span class="badge badge-estado-@m.Estado">@m.Estado</span></td>
                     <td>
                         @if (m.EsFueraDeRango)

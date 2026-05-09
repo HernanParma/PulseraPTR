@@ -7,6 +7,7 @@ public class CrearMedicionDto
     public int PacienteId { get; set; }
     public DateTime FechaHora { get; set; }
     public int FrecuenciaCardiaca { get; set; }
+    public int? PasosActividad { get; set; }
     /// <summary>
     /// Opcional: el servidor reclasifica por FC; se conserva solo si se requiere trazabilidad del cliente.
     /// </summary>

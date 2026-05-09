@@ -27,6 +27,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.pulseraptr.network.NetworkingConfig
@@ -98,6 +99,7 @@ fun generarMensajeAlerta(bpm: Long): String {
 
 suspend fun enviarMedicionAlBackend(
     frecuenciaCardiaca: Long,
+    pasosActividad: Int?,
     estado: String,
     mensajeAlerta: String
 ): Pair<Boolean, String> = withContext(Dispatchers.IO) {
@@ -108,6 +110,7 @@ suspend fun enviarMedicionAlBackend(
             put("pacienteId", NetworkingConfig.DEFAULT_PACIENTE_ID)
             put("fechaHora", Instant.now().toString())
             put("frecuenciaCardiaca", frecuenciaCardiaca)
+            if (pasosActividad != null) put("pasosActividad", pasosActividad)
             put("estado", estado)
             put("mensajeAlerta", mensajeAlerta)
             put("origenDato", "HealthConnect")
@@ -177,6 +180,7 @@ private suspend fun leerYEnviarFrecuenciaCardiaca(
     horaActual: () -> String,
     historial: MutableList<String>,
     onHeartRateText: (String) -> Unit,
+    onPasosText: (String) -> Unit,
     onEstado: (String) -> Unit,
     onAlerta: (String) -> Unit,
     onUltimoEvento: (String) -> Unit,
@@ -195,6 +199,15 @@ private suspend fun leerYEnviarFrecuenciaCardiaca(
                 recordType = HeartRateRecord::class,
                 timeRangeFilter = TimeRangeFilter.between(
                     Instant.now().minus(30, ChronoUnit.DAYS),
+                    Instant.now()
+                )
+            )
+        )
+        val stepsResponse = client.readRecords(
+            ReadRecordsRequest(
+                recordType = StepsRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(
+                    Instant.now().minus(1, ChronoUnit.DAYS),
                     Instant.now()
                 )
             )
@@ -218,21 +231,24 @@ private suspend fun leerYEnviarFrecuenciaCardiaca(
         }
 
         val bpm = sample.beatsPerMinute.toLong()
+        val pasosUltimas24h = stepsResponse.records.sumOf { it.count }.toInt()
         val nuevoEstado = clasificarEstadoFrecuenciaCardiaca(bpm)
         val mensajeAlerta = generarMensajeAlerta(bpm)
 
         onHeartRateText("$bpm bpm")
+        onPasosText("$pasosUltimas24h pasos (24h)")
         onEstado(nuevoEstado)
         onAlerta(mensajeAlerta)
         onUltimoEvento("Lectura de FC obtenida")
 
         historial.add(
             0,
-            "${horaActual()} - FC: $bpm bpm / Estado: $nuevoEstado / $mensajeAlerta"
+            "${horaActual()} - FC: $bpm bpm / Pasos24h: $pasosUltimas24h / Estado: $nuevoEstado / $mensajeAlerta"
         )
 
         val (ok, mensaje) = enviarMedicionAlBackend(
             frecuenciaCardiaca = bpm,
+            pasosActividad = pasosUltimas24h,
             estado = nuevoEstado,
             mensajeAlerta = mensajeAlerta
         )
@@ -255,6 +271,7 @@ fun PantallaPrincipal(
     var estado by remember { mutableStateOf("NORMAL") }
     var ultimoEvento by remember { mutableStateOf("Sin eventos") }
     var heartRateText by remember { mutableStateOf("Sin lectura todavía") }
+    var pasosText by remember { mutableStateOf("Sin lectura todavía") }
     var alertaActual by remember { mutableStateOf("Sin alertas") }
 
     val historial = remember { mutableStateListOf<String>() }
@@ -264,7 +281,8 @@ fun PantallaPrincipal(
     }
 
     val permissions = setOf(
-        HealthPermission.getReadPermission(HeartRateRecord::class)
+        HealthPermission.getReadPermission(HeartRateRecord::class),
+        HealthPermission.getReadPermission(StepsRecord::class)
     )
 
     var permisosFcListos by remember { mutableStateOf(false) }
@@ -307,6 +325,7 @@ fun PantallaPrincipal(
                 horaActual = ::horaActual,
                 historial = historial,
                 onHeartRateText = { heartRateText = it },
+                onPasosText = { pasosText = it },
                 onEstado = { estado = it },
                 onAlerta = { alertaActual = it },
                 onUltimoEvento = { ultimoEvento = it },
@@ -332,6 +351,8 @@ fun PantallaPrincipal(
             Text(text = "Último evento: $ultimoEvento")
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Frecuencia cardíaca: $heartRateText")
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Actividad: $pasosText")
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Alerta actual: $alertaActual")
 
@@ -397,6 +418,7 @@ fun PantallaPrincipal(
                                     horaActual = ::horaActual,
                                     historial = historial,
                                     onHeartRateText = { heartRateText = it },
+                                    onPasosText = { pasosText = it },
                                     onEstado = { estado = it },
                                     onAlerta = { alertaActual = it },
                                     onUltimoEvento = { ultimoEvento = it },

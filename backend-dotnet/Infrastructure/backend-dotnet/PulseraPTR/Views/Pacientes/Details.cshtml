@@ -114,6 +114,7 @@
                 <tr>
                     <th>Fecha</th>
                     <th>FC</th>
+                    <th>Pasos</th>
                     <th>Estado</th>
                     <th>Fuera de rango</th>
                     <th>Origen</th>
@@ -127,6 +128,7 @@
                 <tr>
                     <td class="text-nowrap">@m.FechaHora.ToString("g")</td>
                     <td>@m.FrecuenciaCardiaca</td>
+                    <td>@(m.PasosActividad?.ToString() ?? "-")</td>
                     <td><span class="badge badge-estado-@m.Estado">@m.Estado</span></td>
                     <td>@(m.EsFueraDeRango ? "Sí" : "No")</td>
                     <td>@m.OrigenDato</td>

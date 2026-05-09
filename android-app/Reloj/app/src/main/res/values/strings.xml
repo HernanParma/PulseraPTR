@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Reloj</string>
+    <!-- Nombre distinto del ícono del sistema "Reloj" (reloj/despertador en español). -->
+    <string name="app_name">PulseraPTR</string>
 </resources>

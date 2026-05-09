@@ -61,6 +61,7 @@ public class MedicionService : IMedicionService
             PacienteId = dto.PacienteId,
             FechaHora = dto.FechaHora,
             FrecuenciaCardiaca = dto.FrecuenciaCardiaca,
+            PasosActividad = dto.PasosActividad,
             Estado = estadoCalculado,
             MensajeAlerta = mensaje,
             OrigenDato = string.IsNullOrWhiteSpace(dto.OrigenDato) ? "Desconocido" : dto.OrigenDato.Trim(),

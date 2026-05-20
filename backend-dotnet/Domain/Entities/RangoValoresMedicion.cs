@@ -14,6 +14,7 @@ namespace Domain.Entities
         public int ValorCriticoMinimo { get; set; }
         public int ValorCriticoMaximo { get; set; }
 
+        protected RangoValoresMedicion() { }
         public RangoValoresMedicion(TipoMedicion tipo,
                             int rangoEdadMinimo,
                             int rangoEdadMaximo,

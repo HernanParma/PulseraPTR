@@ -21,6 +21,8 @@ public static class DependencyInjection
         services.AddScoped<IAlertaService, AlertaService>();
         services.AddScoped<IDashboardService, DashboardService>();
 
+        services.AddScoped<IClasificarEstadoClinico, ClasificarEstadoClinicoService>();
+
         services.AddScoped<IGlucoseAlertEvaluator, GlucoseAlertEvaluator>();
         services.AddScoped<IGlucoseImportService, GlucoseImportService>();
         services.AddScoped<IGlucoseReadingsQueryService, GlucoseReadingsQueryService>();

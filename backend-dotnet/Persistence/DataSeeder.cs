@@ -65,7 +65,7 @@ public static class DataSeeder
             {
                 PacienteId = p1.Id,
                 FechaHora = baseFecha.AddHours(1),
-                FrecuenciaCardiaca = 72,
+                ValorMedicion = 72,
                 Estado = EstadoClinico.NORMAL,
                 MensajeAlerta = "Frecuencia cardíaca normal",
                 OrigenDato = "HealthConnect",
@@ -75,7 +75,7 @@ public static class DataSeeder
             {
                 PacienteId = p1.Id,
                 FechaHora = baseFecha.AddHours(3),
-                FrecuenciaCardiaca = 48,
+                ValorMedicion = 48,
                 Estado = EstadoClinico.ADVERTENCIA,
                 MensajeAlerta = "Bradicardia leve",
                 OrigenDato = "HealthConnect",
@@ -85,7 +85,7 @@ public static class DataSeeder
             {
                 PacienteId = p1.Id,
                 FechaHora = baseFecha.AddHours(5),
-                FrecuenciaCardiaca = 125,
+                ValorMedicion = 125,
                 Estado = EstadoClinico.CRITICO,
                 MensajeAlerta = "Taquicardia",
                 OrigenDato = "HealthConnect",
@@ -95,7 +95,7 @@ public static class DataSeeder
             {
                 PacienteId = p2.Id,
                 FechaHora = baseFecha.AddMinutes(30),
-                FrecuenciaCardiaca = 88,
+                ValorMedicion = 88,
                 Estado = EstadoClinico.NORMAL,
                 MensajeAlerta = "En rango",
                 OrigenDato = "HealthConnect",
@@ -105,7 +105,7 @@ public static class DataSeeder
             {
                 PacienteId = p2.Id,
                 FechaHora = baseFecha.AddHours(2),
-                FrecuenciaCardiaca = 110,
+                ValorMedicion = 110,
                 Estado = EstadoClinico.ADVERTENCIA,
                 MensajeAlerta = "FC elevada",
                 OrigenDato = "HealthConnect",
@@ -115,7 +115,7 @@ public static class DataSeeder
             {
                 PacienteId = p2.Id,
                 FechaHora = baseFecha.AddHours(4),
-                FrecuenciaCardiaca = 95,
+                ValorMedicion = 95,
                 Estado = EstadoClinico.NORMAL,
                 MensajeAlerta = "Recuperación",
                 OrigenDato = "HealthConnect",
@@ -125,7 +125,7 @@ public static class DataSeeder
             {
                 PacienteId = p3.Id,
                 FechaHora = baseFecha.AddHours(1).AddMinutes(15),
-                FrecuenciaCardiaca = 60,
+                ValorMedicion = 60,
                 Estado = EstadoClinico.NORMAL,
                 MensajeAlerta = "Estable",
                 OrigenDato = "HealthConnect",
@@ -135,7 +135,7 @@ public static class DataSeeder
             {
                 PacienteId = p3.Id,
                 FechaHora = baseFecha.AddHours(2),
-                FrecuenciaCardiaca = 122,
+                ValorMedicion = 122,
                 Estado = EstadoClinico.CRITICO,
                 MensajeAlerta = "FC crítica",
                 OrigenDato = "HealthConnect",
@@ -145,7 +145,7 @@ public static class DataSeeder
             {
                 PacienteId = p3.Id,
                 FechaHora = baseFecha.AddHours(6),
-                FrecuenciaCardiaca = 76,
+                ValorMedicion = 76,
                 Estado = EstadoClinico.NORMAL,
                 MensajeAlerta = "Normal",
                 OrigenDato = "HealthConnect",

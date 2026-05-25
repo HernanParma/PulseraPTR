@@ -17,10 +17,13 @@
     <Compile Include="DependencyInjection.cs" />
     <Compile Include="Persistence\**\*.cs" />
     <Compile Include="Repositories\**\*.cs" />
+    <Compile Include="Infrastructure\Workers\**\*.cs" />
     <Compile Include="Notifications\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.16.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
       <PrivateAssets>all</PrivateAssets>

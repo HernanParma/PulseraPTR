@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Necesario para dotnet user-secrets (Program.cs, solo DEBUG). -->
+    <UserSecretsId>pulsera-ptr-web-3b5f7c2e-1a4d-4f8b-9c6e-0d2f1a3b4c5d</UserSecretsId>
     <RootNamespace>PulseraPTR</RootNamespace>
     <AssemblyName>PulseraPTR</AssemblyName>
     <LaunchProfileName>PulseraPTR</LaunchProfileName>

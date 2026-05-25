@@ -14,6 +14,7 @@ public class PacienteService : IPacienteService
     private readonly IMedicionRepository _mediciones;
     private readonly IAlertaRepository _alertas;
     private readonly IEventoEmergenciaRepository _eventos;
+    private readonly IGlucoseReadingsQueryService _glucoseReadings;
     private readonly IClasificacionEstadoCardiaco _clasificacion;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -22,6 +23,7 @@ public class PacienteService : IPacienteService
         IMedicionRepository mediciones,
         IAlertaRepository alertas,
         IEventoEmergenciaRepository eventos,
+        IGlucoseReadingsQueryService glucoseReadings,
         IClasificacionEstadoCardiaco clasificacion,
         IUnitOfWork unitOfWork)
     {
@@ -29,6 +31,7 @@ public class PacienteService : IPacienteService
         _mediciones = mediciones;
         _alertas = alertas;
         _eventos = eventos;
+        _glucoseReadings = glucoseReadings;
         _clasificacion = clasificacion;
         _unitOfWork = unitOfWork;
     }
@@ -42,7 +45,8 @@ public class PacienteService : IPacienteService
         {
             var ultima = await _mediciones.GetUltimaPorPacienteAsync(p.Id, cancellationToken);
             var estado = ultima != null ? ultima.Estado : (EstadoClinico?)null;
-            resultado.Add(p.ToDto(estado, ultima?.FechaHora));
+            resultado.Add(p.ToDto(estado,
+                ultima is null ? null : PulseraMapper.ParaVisualizacionFechaHora(ultima.FechaHora)));
         }
 
         return resultado;
@@ -55,7 +59,8 @@ public class PacienteService : IPacienteService
             return null;
 
         var ultima = await _mediciones.GetUltimaPorPacienteAsync(id, cancellationToken);
-        return p.ToDto(ultima?.Estado, ultima?.FechaHora);
+        return p.ToDto(ultima?.Estado,
+            ultima is null ? null : PulseraMapper.ParaVisualizacionFechaHora(ultima.FechaHora));
     }
 
     public async Task<PacienteDetalleDto> ObtenerDetalleAsync(int id, CancellationToken cancellationToken = default)
@@ -66,6 +71,7 @@ public class PacienteService : IPacienteService
         var mediciones = await _mediciones.BuscarAsync(id, null, null, null, null, cancellationToken);
         var alertas = await _alertas.BuscarAsync(id, null, cancellationToken);
         var eventos = await _eventos.BuscarAsync(id, null, null, cancellationToken);
+        var glucemia = await _glucoseReadings.GetDashboardAsync(id, cancellationToken);
 
         var ultima = mediciones.OrderByDescending(m => m.FechaHora).FirstOrDefault();
 
@@ -79,10 +85,11 @@ public class PacienteService : IPacienteService
             Observaciones = p.Observaciones,
             Activo = p.Activo,
             EstadoActual = ultima?.Estado,
-            UltimaMedicionFechaHora = ultima?.FechaHora,
+            UltimaMedicionFechaHora = ultima is null ? null : PulseraMapper.ParaVisualizacionFechaHora(ultima.FechaHora),
             Mediciones = mediciones.OrderByDescending(m => m.FechaHora).Select(m => m.ToDto()).ToList(),
             Alertas = alertas.OrderByDescending(a => a.FechaHora).Select(a => a.ToDto()).ToList(),
-            EventosSos = eventos.OrderByDescending(e => e.FechaHora).Select(e => e.ToDto()).ToList()
+            EventosSos = eventos.OrderByDescending(e => e.FechaHora).Select(e => e.ToDto()).ToList(),
+            Glucemia = glucemia
         };
     }
 

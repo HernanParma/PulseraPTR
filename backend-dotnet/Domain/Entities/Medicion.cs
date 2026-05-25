@@ -8,6 +8,7 @@ public class Medicion
     public int PacienteId { get; set; }
     public DateTime FechaHora { get; set; }
     public int ValorMedicion { get; set; }
+    public int? PasosActividad { get; set; }
     public EstadoClinico Estado { get; set; }
     public string? MensajeAlerta { get; set; }
     public string OrigenDato { get; set; } = string.Empty;

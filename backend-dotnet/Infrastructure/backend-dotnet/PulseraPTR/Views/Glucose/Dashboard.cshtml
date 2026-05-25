@@ -1,0 +1,259 @@
+@model GlucoseDashboardDto
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Glucemia — Dashboard";
+    var pacienteNombre = ViewBag.PacienteNombre as string ?? "";
+    var jsonOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var chartJson = JsonSerializer.Serialize(Model.ChartPoints, jsonOpts);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h1 class="h3 mb-0">Glucemia</h1>
+        <p class="text-muted mb-0">@pacienteNombre <span class="badge bg-secondary">ID @Model.PacienteId</span></p>
+        <small class="text-muted">Resumen últimos @((Model.SummaryToUtc - Model.SummaryFromUtc).TotalDays) días (UTC almacenado)</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary btn-sm" asp-controller="Glucose" asp-action="Import">Importar CSV</a>
+        <a class="btn btn-outline-secondary btn-sm" asp-controller="Pacientes" asp-action="Index">Pacientes</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg">
+        <div class="card card-metric h-100">
+            <div class="card-body">
+                <div class="text-muted small">Última glucemia</div>
+                <div class="fs-4 fw-semibold">
+                    @(Model.LastReading is null ? "—" : $"{Model.LastReading.GlucoseMgDl} mg/dL")
+                </div>
+                @if (Model.LastReading is not null)
+                {
+                    <small class="text-muted">@Model.LastReading.ReadingDateTimeUtc.ToString("dd MMM yyyy HH:mm") UTC</small>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card card-metric h-100">
+            <div class="card-body">
+                <div class="text-muted small">Promedio</div>
+                <div class="fs-4 fw-semibold">@(Model.AverageMgDl?.ToString() ?? "—")</div>
+                <small class="text-muted">mg/dL</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card card-metric h-100">
+            <div class="card-body">
+                <div class="text-muted small">Mínimo / Máximo</div>
+                <div class="fs-4 fw-semibold">
+                    @(Model.MinMgDl?.ToString() ?? "—") / @(Model.MaxMgDl?.ToString() ?? "—")
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card card-metric h-100">
+            <div class="card-body">
+                <div class="text-muted small">Hipoglucemias / Hiperglucemias</div>
+                <div class="fs-4 fw-semibold">@Model.HypoglycemiaCount / @Model.HyperglycemiaCount</div>
+                <small class="text-muted">&lt;70 / &gt;180 mg/dL</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg">
+        <div class="card card-metric h-100 border-warning">
+            <div class="card-body">
+                <div class="text-muted small">Alertas destacadas</div>
+                <div class="fs-4 fw-semibold">@Model.HighlightedAlertCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-semibold">Tendencia</div>
+            <div class="card-body" style="height: 320px;">
+                @if (Model.ChartPoints.Count == 0)
+                {
+                    <p class="text-muted mb-0">No hay mediciones en el período seleccionado.</p>
+                }
+                else
+                {
+                    <canvas id="glucoseChart"></canvas>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold">Alertas</div>
+            <div class="card-body p-0">
+                @if (Model.Alerts.Count == 0)
+                {
+                    <p class="text-muted p-3 mb-0">Sin alertas en el período.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Severidad</th>
+                                    <th>Mensaje</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var a in Model.Alerts.Take(40))
+                                {
+                                    <tr>
+                                        <td>
+                                            <span class="badge @(a.Severity == "Critical" ? "bg-danger" : a.Severity == "Warning" ? "bg-warning text-dark" : "bg-info text-dark")">@a.Severity</span>
+                                        </td>
+                                        <td><small>@a.Message</small></td>
+                                        <td><small>@a.OccurredAtUtc.ToString("dd/MM HH:mm")</small></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">Últimas mediciones</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha (UTC)</th>
+                        <th>Valor</th>
+                        <th>Rango</th>
+                        <th>Etiqueta</th>
+                        <th>Origen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model.RecentReadings)
+                    {
+                        var bandClass = r.Band switch
+                        {
+                            GlucoseRangeBand.SevereHypoglycemia => "badge-glucose-severe-hypo",
+                            GlucoseRangeBand.Hypoglycemia => "badge-glucose-hypo",
+                            GlucoseRangeBand.Normal => "badge-glucose-normal",
+                            GlucoseRangeBand.Hyperglycemia => "badge-glucose-hyper",
+                            GlucoseRangeBand.SevereHyperglycemia => "badge-glucose-severe-hyper",
+                            GlucoseRangeBand.CriticalIsolated => "badge-glucose-critical",
+                            _ => "bg-secondary"
+                        };
+                        var bandText = r.Band switch
+                        {
+                            GlucoseRangeBand.SevereHypoglycemia => "Hipo severa",
+                            GlucoseRangeBand.Hypoglycemia => "Hipo",
+                            GlucoseRangeBand.Normal => "Normal",
+                            GlucoseRangeBand.Hyperglycemia => "Hiper",
+                            GlucoseRangeBand.SevereHyperglycemia => "Hiper severa",
+                            GlucoseRangeBand.CriticalIsolated => "Crítico",
+                            _ => r.Band.ToString()
+                        };
+                        var labelTrim = r.Label.Trim();
+                        string? labelBadge = labelTrim switch
+                        {
+                            "En ayunas" => "label-badge-fasting",
+                            "Antes de comer" => "label-badge-before",
+                            "Después de comer" => "label-badge-after",
+                            _ => null
+                        };
+                        <tr>
+                            <td><small>@r.ReadingDateTimeUtc.ToString("yyyy-MM-dd HH:mm:ss")</small></td>
+                            <td class="fw-semibold">@r.GlucoseMgDl</td>
+                            <td><span class="badge @bandClass">@bandText</span></td>
+                            <td>
+                                @if (labelBadge is not null)
+                                {
+                                    <span class="badge @labelBadge">@labelTrim</span>
+                                }
+                                else if (!string.IsNullOrEmpty(labelTrim))
+                                {
+                                    <span class="badge bg-light text-dark border">@labelTrim</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td><small>@(r.SourceFileName ?? "—")</small></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const pacienteId = @Model.PacienteId;
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/pulsera')
+                .withAutomaticReconnect()
+                .build();
+            connection.on('glucemiaActualizada', function (data) {
+                if (data && Number(data.pacienteId) === pacienteId)
+                    window.location.reload();
+            });
+            connection.onreconnected(function () {
+                connection.invoke('JoinGlucoseDashboard', pacienteId).catch(function (err) { console.error('SignalR rejoin:', err); });
+            });
+            connection.start()
+                .then(function () { return connection.invoke('JoinGlucoseDashboard', pacienteId); })
+                .catch(function (err) { console.error('SignalR glucemia:', err); });
+        })();
+    </script>
+    @if (Model.ChartPoints.Count > 0)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <script>
+            const chartPoints = @Html.Raw(chartJson);
+            const labels = chartPoints.map(p => {
+                const d = new Date(p.atUtc);
+                return d.toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            });
+            const data = chartPoints.map(p => p.glucoseMgDl);
+            const ctx = document.getElementById('glucoseChart');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'mg/dL',
+                        data,
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        backgroundColor: 'rgba(13, 110, 253, 0.15)',
+                        tension: 0.2,
+                        fill: true,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: false, title: { display: true, text: 'mg/dL' } },
+                        x: { ticks: { maxRotation: 45, minRotation: 45 } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        </script>
+    }
+}

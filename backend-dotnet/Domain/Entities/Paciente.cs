@@ -13,4 +13,5 @@ public class Paciente
     public ICollection<Medicion> Mediciones { get; set; } = new List<Medicion>();
     public ICollection<EventoEmergencia> EventosEmergencia { get; set; } = new List<EventoEmergencia>();
     public ICollection<Alerta> Alertas { get; set; } = new List<Alerta>();
+    public ICollection<GlucoseReading> GlucoseReadings { get; set; } = new List<GlucoseReading>();
 }

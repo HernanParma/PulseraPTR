@@ -54,7 +54,8 @@ public class MedicionService : IMedicionService
                                                 dto.Valor,
                                                 dto.FechaHora,
                                                 dto.OrigenDato);
-
+        entity.Tipo = dto.Tipo;
+        entity.PasosActividad = dto.PasosActividad;
 
         await _clasificacion.ClasificarMedicion(entity);
 

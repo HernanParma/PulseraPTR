@@ -8,5 +8,6 @@ public class CrearMedicionDto
     public DateTime FechaHora { get; set; }
     public int Valor { get; set; }
     public TipoMedicion Tipo { get; set; }
+    public int? PasosActividad { get; set; }
     public string OrigenDato { get; set; } = string.Empty;
 }

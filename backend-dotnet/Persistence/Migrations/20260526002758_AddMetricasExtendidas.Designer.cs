@@ -4,6 +4,7 @@ using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260526002758_AddMetricasExtendidas")]
+    partial class AddMetricasExtendidas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -256,9 +259,8 @@ namespace Infrastructure.Persistence.Migrations
                         {
                             Id = 22,
                             Activo = true,
-                            ContactoEmergencia = "1123516612 Laura (hija)",
-                            Dni = "6.789.112",
-                            Edad = 71,
+                            ContactoEmergencia = "N/A (paciente técnico)",
+                            Edad = 1,
                             Nombre = "Reloj en tiempo real",
                             Observaciones = "Paciente técnico para integración con app Android en tiempo real"
                         });

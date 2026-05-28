@@ -135,7 +135,19 @@ public static class MySugrSpanishDateTimeParser
         return s.Trim();
     }
 
-    private static bool TryParseGmtOffset(string tz, out TimeSpan offset)
+    /// <summary>
+    /// Convierte UTC almacenado a hora local según el offset del CSV (ej. GMT-03:00 → resta 3 h a UTC).
+    /// </summary>
+    public static DateTime ConvertUtcToLocalForDisplay(DateTime readingUtc, string? timeZoneRaw)
+    {
+        var tz = string.IsNullOrWhiteSpace(timeZoneRaw) ? "GMT-03:00" : timeZoneRaw.Trim();
+        if (!TryParseGmtOffset(tz, out var offset))
+            return readingUtc;
+
+        return DateTime.SpecifyKind(readingUtc, DateTimeKind.Utc).Add(offset);
+    }
+
+    public static bool TryParseGmtOffset(string tz, out TimeSpan offset)
     {
         offset = default;
         var m = Regex.Match(tz.Trim(), @"^GMT(?<sign>[+-])(?<hh>\d{1,2}):(?<mm>\d{2})$", RegexOptions.IgnoreCase);

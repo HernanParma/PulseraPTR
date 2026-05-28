@@ -14,7 +14,7 @@ public static class GlucoseReadingMapper
         {
             Id = r.Id,
             PacienteId = r.PacienteId,
-            ReadingDateTimeUtc = r.ReadingDateTime,
+            ReadingDateTimeUtc = MySugrSpanishDateTimeParser.ConvertUtcToLocalForDisplay(r.ReadingDateTime, r.TimeZone),
             DateRaw = r.DateRaw,
             TimeRaw = r.TimeRaw,
             Label = r.Label,

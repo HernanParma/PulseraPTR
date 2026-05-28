@@ -11,7 +11,7 @@
     <div>
         <h1 class="h3 mb-0">Glucemia</h1>
         <p class="text-muted mb-0">@pacienteNombre <span class="badge bg-secondary">ID @Model.PacienteId</span></p>
-        <small class="text-muted">Resumen últimos @((Model.SummaryToUtc - Model.SummaryFromUtc).TotalDays) días (UTC almacenado)</small>
+        <small class="text-muted">Resumen últimos @((Model.SummaryToUtc - Model.SummaryFromUtc).TotalDays) días (horas en zona del export mySugr)</small>
     </div>
     <div class="d-flex gap-2">
         <a class="btn btn-outline-primary btn-sm" asp-controller="Glucose" asp-action="Import">Importar CSV</a>
@@ -29,7 +29,7 @@
                 </div>
                 @if (Model.LastReading is not null)
                 {
-                    <small class="text-muted">@Model.LastReading.ReadingDateTimeUtc.ToString("dd MMM yyyy HH:mm") UTC</small>
+                    <small class="text-muted">@Model.LastReading.ReadingDateTimeUtc.ToString("dd MMM yyyy HH:mm") (hora local)</small>
                 }
             </div>
         </div>
@@ -134,7 +134,7 @@
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Fecha (UTC)</th>
+                        <th>Fecha y hora</th>
                         <th>Valor</th>
                         <th>Rango</th>
                         <th>Etiqueta</th>

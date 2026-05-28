@@ -6,6 +6,34 @@
     string? filtroDesde = ViewBag.FechaDesde as string;
     string? filtroHasta = ViewBag.FechaHasta as string;
     var filtroEstado = ViewBag.Estado as EstadoClinico?;
+
+    var totalMediciones = Model.Count;
+    var medicionesConFc = Model.Where(m => m.FrecuenciaCardiaca > 0).ToList();
+    var fcPromedio = medicionesConFc.Any() ? (int)medicionesConFc.Average(m => m.FrecuenciaCardiaca) : 0;
+    var fcMin = medicionesConFc.Any() ? medicionesConFc.Min(m => m.FrecuenciaCardiaca) : 0;
+    var fcMax = medicionesConFc.Any() ? medicionesConFc.Max(m => m.FrecuenciaCardiaca) : 0;
+
+    var medicionesConPasos = Model.Where(m => m.PasosActividad.HasValue && m.PasosActividad > 0).ToList();
+    var pasosTotal = medicionesConPasos.Any() ? medicionesConPasos.Sum(m => m.PasosActividad!.Value) : 0;
+    var pasosPromedio = medicionesConPasos.Any() ? (int)medicionesConPasos.Average(m => m.PasosActividad!.Value) : 0;
+
+    var medicionesConEstres = Model.Where(m => m.NivelEstres.HasValue).ToList();
+    var estresPromedio = medicionesConEstres.Any() ? (int)medicionesConEstres.Average(m => m.NivelEstres!.Value) : 0;
+
+    var medicionesConSueno = Model.Where(m => m.MinutosSueno.HasValue).ToList();
+    var suenoPromedioMin = medicionesConSueno.Any() ? (int)medicionesConSueno.Average(m => m.MinutosSueno!.Value) : 0;
+    var suenoHoras = suenoPromedioMin / 60;
+    var suenoMinutos = suenoPromedioMin % 60;
+
+    var medicionesConActividad = Model.Where(m => m.MinutosActividad.HasValue).ToList();
+    var actividadPromedio = medicionesConActividad.Any() ? (int)medicionesConActividad.Average(m => m.MinutosActividad!.Value) : 0;
+
+    var medicionesConCalorias = Model.Where(m => m.CaloriasQuemadas.HasValue).ToList();
+    var caloriasPromedio = medicionesConCalorias.Any() ? (int)medicionesConCalorias.Average(m => m.CaloriasQuemadas!.Value) : 0;
+
+    var pacienteSeleccionado = filtroPaciente.HasValue
+        ? pacientes.FirstOrDefault(p => p.Id == filtroPaciente.Value)?.Nombre ?? $"Paciente {filtroPaciente}"
+        : "Todos";
 }
 
 <div class="d-flex align-items-center justify-content-between mb-3">
@@ -16,7 +44,8 @@
     <a class="btn btn-outline-secondary" asp-action="Index">Limpiar filtros</a>
 </div>
 
-<form class="card shadow-sm mb-3" method="get">
+<!-- Filtros -->
+<form class="card shadow-sm mb-4" method="get">
     <div class="card-body row g-3 align-items-end">
         <div class="col-md-3">
             <label class="form-label">Paciente</label>
@@ -66,6 +95,140 @@
     </div>
 </form>
 
+<!-- Cards de resumen -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+        <div class="card metric-card h-100">
+            <div class="card-body text-center">
+                <div class="metric-label">Mediciones</div>
+                <div class="metric-value text-primary">@totalMediciones</div>
+                <div class="metric-sub">filtro actual</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card metric-card h-100">
+            <div class="card-body text-center">
+                <div class="metric-label">FC promedio</div>
+                <div class="metric-value text-danger">@(fcPromedio > 0 ? fcPromedio.ToString() : "—")</div>
+                <div class="metric-sub">@(fcPromedio > 0 ? "lpm" : "sin dato")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card metric-card h-100">
+            <div class="card-body text-center">
+                <div class="metric-label">Pasos</div>
+                <div class="metric-value text-success">@(pasosTotal > 0 ? pasosTotal.ToString("N0") : "—")</div>
+                <div class="metric-sub">@(pasosPromedio > 0 ? $"prom. {pasosPromedio:N0}" : "sin dato")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card metric-card h-100">
+            <div class="card-body text-center">
+                <div class="metric-label">Estrés promedio</div>
+                <div class="metric-value text-secondary">@(estresPromedio > 0 ? estresPromedio.ToString() : "—")</div>
+                <div class="metric-sub">@(estresPromedio > 0 ? "sin dato" : "sin dato")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card metric-card h-100">
+            <div class="card-body text-center">
+                <div class="metric-label">Sueño promedio</div>
+                <div class="metric-value text-info">@(suenoPromedioMin > 0 ? $"{suenoHoras}h {suenoMinutos}m" : "—")</div>
+                <div class="metric-sub">@(suenoPromedioMin > 0 ? $"{suenoPromedioMin} min" : "sin dato")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card metric-card h-100">
+            <div class="card-body text-center">
+                <div class="metric-label">Actividad</div>
+                <div class="metric-value text-warning">@(actividadPromedio > 0 ? $"{actividadPromedio}" : "—")</div>
+                <div class="metric-sub">@(caloriasPromedio > 0 ? $"{caloriasPromedio} kcal" : "sin dato")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Panel de gráficos -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <span class="fw-semibold">Panel de métricas del paciente</span>
+            <br><small class="text-muted">Elegí un atributo para analizar su evolución con los filtros actuales · Paciente: @pacienteSeleccionado</small>
+        </div>
+        <div>
+            <label class="form-label small mb-0 me-1">Métrica</label>
+            <select class="form-select form-select-sm d-inline-block w-auto" id="metricSelect">
+                <option value="fc">Frecuencia cardíaca</option>
+                <option value="pasos">Pasos</option>
+                <option value="estres">Estrés</option>
+                <option value="sueno">Sueño</option>
+                <option value="actividad">Actividad</option>
+                <option value="calorias">Calorías</option>
+                <option value="glucemia">Glucemia</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Botones de métrica -->
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            <button class="btn btn-metric active" data-metric="fc">
+                <i class="bi bi-heart-pulse-fill"></i> FC
+            </button>
+            <button class="btn btn-metric" data-metric="pasos">
+                <i class="bi bi-person-walking"></i> Pasos
+            </button>
+            <button class="btn btn-metric" data-metric="estres">
+                <i class="bi bi-emoji-neutral"></i> Estrés
+            </button>
+            <button class="btn btn-metric" data-metric="sueno">
+                <i class="bi bi-moon-stars"></i> Sueño
+            </button>
+            <button class="btn btn-metric" data-metric="actividad">
+                <i class="bi bi-lightning"></i> Actividad
+            </button>
+            <button class="btn btn-metric" data-metric="calorias">
+                <i class="bi bi-fire"></i> Calorías
+            </button>
+            <button class="btn btn-metric" data-metric="glucemia">
+                <i class="bi bi-droplet-fill"></i> Glucemia
+            </button>
+        </div>
+
+        <!-- Título del gráfico -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <h5 class="mb-0" id="chartTitle">Frecuencia cardíaca</h5>
+                <small class="text-muted" id="chartSubtitle">Latidos por minuto</small>
+            </div>
+            <div>
+                <span class="badge bg-light text-dark border" id="chartDataCount">@medicionesConFc.Count datos</span>
+            </div>
+        </div>
+
+        <!-- Resumen de la métrica seleccionada -->
+        <div class="row mb-3">
+            <div class="col-md-9">
+                <canvas id="metricChart" height="280"></canvas>
+            </div>
+            <div class="col-md-3 d-flex align-items-center">
+                <div class="p-3 bg-light rounded w-100 text-center" id="chartSummary">
+                    <div class="text-muted small">Resumen seleccionado</div>
+                    <div class="display-5 fw-bold text-primary" id="summaryValue">@(fcPromedio > 0 ? $"{fcPromedio} lpm" : "—")</div>
+                    <div class="text-muted small" id="summaryDetail">
+                        @(medicionesConFc.Any() ? $"Promedio {fcPromedio} lpm · mínimo {fcMin} lpm · máximo {fcMax} lpm" : "Sin datos")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de datos -->
 <div class="card shadow-sm">
     <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
         <span>Resultados (@Model.Count)</span>
@@ -95,7 +258,7 @@
                     <td class="text-nowrap">@m.FechaHora.ToString("g")</td>
                     <td>@m.PacienteNombre</td>
                     <td>@m.FrecuenciaCardiaca</td>
-                    <td>@(m.PasosActividad?.ToString() ?? "-")</td>
+                    <td>@(m.PasosActividad?.ToString("N0") ?? "-")</td>
                     <td><span class="badge badge-estado-@m.Estado">@m.Estado</span></td>
                     <td>
                         @if (m.EsFueraDeRango)
@@ -142,7 +305,286 @@
 </div>
 
 @section Scripts {
-    <script>
-        window.pulseraRealtimeReload = () => window.location.reload();
-    </script>
+<script>
+(function() {
+    // Datos de mediciones serializados desde el servidor
+    const mediciones = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(m => new {
+        fecha = m.FechaHora.ToString("yyyy-MM-dd HH:mm"),
+        fc = m.FrecuenciaCardiaca,
+        pasos = m.PasosActividad,
+        estres = m.NivelEstres,
+        sueno = m.MinutosSueno,
+        actividad = m.MinutosActividad,
+        calorias = m.CaloriasQuemadas
+    }).OrderBy(m => m.fecha)));
+
+    const pacienteId = @(filtroPaciente.HasValue ? filtroPaciente.Value.ToString() : "null");
+
+    const ctx = document.getElementById('metricChart').getContext('2d');
+    let chart = null;
+
+    const metricConfig = {
+        fc: {
+            title: 'Frecuencia cardíaca',
+            subtitle: 'Latidos por minuto',
+            color: '#dc3545',
+            bgColor: 'rgba(220, 53, 69, 0.1)',
+            type: 'line',
+            unit: 'lpm',
+            getData: () => {
+                const data = mediciones.filter(m => m.fc > 0);
+                return { labels: data.map(m => m.fecha), values: data.map(m => m.fc) };
+            }
+        },
+        pasos: {
+            title: 'Pasos',
+            subtitle: 'Pasos por medición',
+            color: '#198754',
+            bgColor: 'rgba(25, 135, 84, 0.15)',
+            type: 'bar',
+            unit: 'pasos',
+            getData: () => {
+                const data = mediciones.filter(m => m.pasos != null && m.pasos > 0);
+                return { labels: data.map(m => m.fecha), values: data.map(m => m.pasos) };
+            }
+        },
+        estres: {
+            title: 'Estrés',
+            subtitle: 'Nivel de estrés (0-100)',
+            color: '#fd7e14',
+            bgColor: 'rgba(253, 126, 20, 0.12)',
+            type: 'line',
+            unit: 'pts',
+            getData: () => {
+                const data = mediciones.filter(m => m.estres != null);
+                return { labels: data.map(m => m.fecha), values: data.map(m => m.estres) };
+            }
+        },
+        sueno: {
+            title: 'Sueño',
+            subtitle: 'Minutos de sueño',
+            color: '#0dcaf0',
+            bgColor: 'rgba(13, 202, 240, 0.15)',
+            type: 'bar',
+            unit: 'min',
+            getData: () => {
+                const data = mediciones.filter(m => m.sueno != null);
+                return { labels: data.map(m => m.fecha), values: data.map(m => m.sueno) };
+            }
+        },
+        actividad: {
+            title: 'Actividad',
+            subtitle: 'Minutos de actividad física',
+            color: '#ffc107',
+            bgColor: 'rgba(255, 193, 7, 0.15)',
+            type: 'bar',
+            unit: 'min',
+            getData: () => {
+                const data = mediciones.filter(m => m.actividad != null);
+                return { labels: data.map(m => m.fecha), values: data.map(m => m.actividad) };
+            }
+        },
+        calorias: {
+            title: 'Calorías',
+            subtitle: 'Calorías quemadas',
+            color: '#dc3545',
+            bgColor: 'rgba(220, 53, 69, 0.1)',
+            type: 'bar',
+            unit: 'kcal',
+            getData: () => {
+                const data = mediciones.filter(m => m.calorias != null);
+                return { labels: data.map(m => m.fecha), values: data.map(m => m.calorias) };
+            }
+        },
+        glucemia: {
+            title: 'Glucemia',
+            subtitle: 'mg/dL',
+            color: '#6f42c1',
+            bgColor: 'rgba(111, 66, 193, 0.1)',
+            type: 'line',
+            unit: 'mg/dL',
+            getData: () => ({ labels: [], values: [], loading: true })
+        }
+    };
+
+    function renderChart(metric) {
+        const config = metricConfig[metric];
+        if (!config) return;
+
+        document.getElementById('chartTitle').textContent = config.title;
+        document.getElementById('chartSubtitle').textContent = config.subtitle;
+
+        // Actualizar botones
+        document.querySelectorAll('.btn-metric').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector(`[data-metric="${metric}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+        document.getElementById('metricSelect').value = metric;
+
+        if (metric === 'glucemia') {
+            loadGlucemiaChart();
+            return;
+        }
+
+        const { labels, values } = config.getData();
+        document.getElementById('chartDataCount').textContent = `${values.length} datos`;
+
+        if (values.length === 0) {
+            updateSummary('—', 'Sin datos disponibles para esta métrica');
+            drawEmptyChart(config);
+            return;
+        }
+
+        const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        updateSummary(`${avg} ${config.unit}`, `Promedio ${avg} ${config.unit} · mínimo ${min} ${config.unit} · máximo ${max} ${config.unit}`);
+
+        if (chart) chart.destroy();
+
+        const borderColor = config.color;
+        const backgroundColor = config.type === 'bar' ? config.bgColor : config.bgColor;
+
+        chart = new Chart(ctx, {
+            type: config.type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: config.title,
+                    data: values,
+                    borderColor: borderColor,
+                    backgroundColor: backgroundColor,
+                    borderWidth: 2,
+                    fill: config.type === 'line',
+                    tension: 0.3,
+                    pointRadius: values.length > 50 ? 0 : 3,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.parsed.y} ${config.unit}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        ticks: { maxTicksLimit: 8, maxRotation: 0 },
+                        grid: { display: false }
+                    },
+                    y: {
+                        display: true,
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    }
+                }
+            }
+        });
+    }
+
+    function drawEmptyChart(config) {
+        if (chart) chart.destroy();
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: ['Sin datos'], datasets: [{ data: [0], borderColor: '#dee2e6' }] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
+    }
+
+    function updateSummary(value, detail) {
+        document.getElementById('summaryValue').textContent = value;
+        document.getElementById('summaryDetail').textContent = detail;
+    }
+
+    async function loadGlucemiaChart() {
+        const config = metricConfig.glucemia;
+        if (!pacienteId) {
+            updateSummary('—', 'Seleccioná un paciente para ver glucemia');
+            document.getElementById('chartDataCount').textContent = '0 datos';
+            drawEmptyChart(config);
+            return;
+        }
+
+        try {
+            const resp = await fetch(`/api/glucose/readings/${pacienteId}`);
+            if (!resp.ok) throw new Error('Error al cargar');
+            const readings = await resp.json();
+
+            if (!readings || readings.length === 0) {
+                updateSummary('—', 'Sin lecturas de glucemia');
+                document.getElementById('chartDataCount').textContent = '0 datos';
+                drawEmptyChart(config);
+                return;
+            }
+
+            const sorted = readings.sort((a, b) => a.readingDateTimeUtc.localeCompare(b.readingDateTimeUtc));
+            const labels = sorted.map(r => r.readingDateTimeUtc.substring(0, 16).replace('T', ' '));
+            const values = sorted.map(r => r.glucoseMgDl);
+
+            document.getElementById('chartDataCount').textContent = `${values.length} datos`;
+            const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            updateSummary(`${avg} mg/dL`, `Promedio ${avg} mg/dL · mínimo ${min} mg/dL · máximo ${max} mg/dL`);
+
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Glucemia',
+                        data: values,
+                        borderColor: config.color,
+                        backgroundColor: config.bgColor,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: values.length > 50 ? 0 : 3,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.y} mg/dL` } }
+                    },
+                    scales: {
+                        x: { display: true, ticks: { maxTicksLimit: 8, maxRotation: 0 }, grid: { display: false } },
+                        y: { display: true, grid: { color: 'rgba(0,0,0,0.05)' } }
+                    }
+                }
+            });
+        } catch {
+            updateSummary('—', 'Error al cargar datos de glucemia');
+            drawEmptyChart(config);
+        }
+    }
+
+    // Event listeners
+    document.querySelectorAll('.btn-metric').forEach(btn => {
+        btn.addEventListener('click', () => renderChart(btn.dataset.metric));
+    });
+
+    document.getElementById('metricSelect').addEventListener('change', (e) => {
+        renderChart(e.target.value);
+    });
+
+    // Render inicial
+    renderChart('fc');
+
+    window.pulseraRealtimeReload = () => window.location.reload();
+})();
+</script>
 }

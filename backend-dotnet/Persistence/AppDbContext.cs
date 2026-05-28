@@ -27,9 +27,9 @@ public class AppDbContext : DbContext
             {
                 Id = 22,
                 Nombre = "Reloj en tiempo real",
-                Edad = 1,
-                Dni = null,
-                ContactoEmergencia = "N/A (paciente técnico)",
+                Edad = 71,
+                Dni = "6.789.112",
+                ContactoEmergencia = "1123516612 Laura (hija)",
                 Observaciones = "Paciente técnico para integración con app Android en tiempo real",
                 Activo = true
             });

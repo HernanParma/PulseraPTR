@@ -82,7 +82,7 @@ public sealed class GlucoseAlertEvaluator : IGlucoseAlertEvaluator
                 Code = "CRITICAL_HIGH",
                 Severity = "Critical",
                 Message = $"Valor crítico aislado: {g} mg/dL.",
-                OccurredAtUtc = r.ReadingDateTime,
+                OccurredAtUtc = MySugrSpanishDateTimeParser.ConvertUtcToLocalForDisplay(r.ReadingDateTime, r.TimeZone),
                 RelatedReadingId = r.Id
             };
             yield break;
@@ -95,7 +95,7 @@ public sealed class GlucoseAlertEvaluator : IGlucoseAlertEvaluator
                 Code = "SEVERE_HYPO",
                 Severity = "Critical",
                 Message = $"Hipoglucemia severa: {g} mg/dL.",
-                OccurredAtUtc = r.ReadingDateTime,
+                OccurredAtUtc = MySugrSpanishDateTimeParser.ConvertUtcToLocalForDisplay(r.ReadingDateTime, r.TimeZone),
                 RelatedReadingId = r.Id
             };
             yield break;
@@ -108,7 +108,7 @@ public sealed class GlucoseAlertEvaluator : IGlucoseAlertEvaluator
                 Code = "HYPO",
                 Severity = "Warning",
                 Message = $"Hipoglucemia: {g} mg/dL.",
-                OccurredAtUtc = r.ReadingDateTime,
+                OccurredAtUtc = MySugrSpanishDateTimeParser.ConvertUtcToLocalForDisplay(r.ReadingDateTime, r.TimeZone),
                 RelatedReadingId = r.Id
             };
             yield break;
@@ -121,7 +121,7 @@ public sealed class GlucoseAlertEvaluator : IGlucoseAlertEvaluator
                 Code = "SEVERE_HYPER",
                 Severity = "Warning",
                 Message = $"Hiperglucemia severa: {g} mg/dL.",
-                OccurredAtUtc = r.ReadingDateTime,
+                OccurredAtUtc = MySugrSpanishDateTimeParser.ConvertUtcToLocalForDisplay(r.ReadingDateTime, r.TimeZone),
                 RelatedReadingId = r.Id
             };
             yield break;
@@ -134,7 +134,7 @@ public sealed class GlucoseAlertEvaluator : IGlucoseAlertEvaluator
                 Code = "HYPER",
                 Severity = "Info",
                 Message = $"Hiperglucemia: {g} mg/dL.",
-                OccurredAtUtc = r.ReadingDateTime,
+                OccurredAtUtc = MySugrSpanishDateTimeParser.ConvertUtcToLocalForDisplay(r.ReadingDateTime, r.TimeZone),
                 RelatedReadingId = r.Id
             };
         }

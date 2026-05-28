@@ -13,7 +13,7 @@ package com.pulseraptr.network
 object NetworkingConfig {
 
     // IP de tu PC + puerto HTTP del backend .NET
-    const val BASE_URL: String = "http://192.168.0.106:5093/"
+    const val BASE_URL: String = "http://192.168.0.198:5093/"
 
     // ID del paciente existente en tu base de datos
     const val DEFAULT_PACIENTE_ID: Long = 22L

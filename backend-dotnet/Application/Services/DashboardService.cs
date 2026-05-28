@@ -89,7 +89,9 @@ public class DashboardService : IDashboardService
                     PacienteNombre = x.Reading.Paciente?.Nombre ?? $"Paciente {x.Reading.PacienteId}",
                     GlucosaMgDl = x.Reading.GlucoseMgDl,
                     Banda = x.Band.ToString(),
-                    FechaHoraUtc = x.Reading.ReadingDateTime
+                    FechaHoraUtc = MySugrSpanishDateTimeParser.ConvertUtcToLocalForDisplay(
+                        x.Reading.ReadingDateTime,
+                        x.Reading.TimeZone)
                 })
                 .ToList()
         };

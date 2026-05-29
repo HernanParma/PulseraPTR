@@ -1,74 +1,278 @@
-.card-metric {
-  border: 0;
-  border-radius: 0.75rem;
-  box-shadow: 0 0.25rem 0.75rem rgba(15, 23, 42, 0.08);
+/* ===== Cards de métricas ===== */
+.card-metric,
+.metric-card {
+    border: 0;
+    border-radius: 0.75rem;
+    box-shadow: 0 0.25rem 0.75rem rgba(15, 23, 42, 0.08);
+    transition: transform 0.15s, box-shadow 0.15s;
 }
 
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1.5rem rgba(15, 23, 42, 0.12);
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #6c757d;
+}
+
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0.25rem 0;
+}
+
+.metric-sub {
+    font-size: 0.7rem;
+    color: #adb5bd;
+}
+
+/* ===== Botones de métrica ===== */
+.btn-metric {
+    border: 2px solid #e9ecef;
+    border-radius: 2rem;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #495057;
+    background: #fff;
+    transition: all 0.2s;
+}
+
+.btn-metric:hover:not([disabled]) {
+    border-color: #0d6efd;
+    color: #0d6efd;
+    background: #f0f6ff;
+}
+
+.btn-metric.active {
+    border-color: #0d6efd;
+    background: #0d6efd;
+    color: #fff;
+}
+
+.btn-metric[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-metric i {
+    margin-right: 0.25rem;
+}
+
+/* ===== Tablas ===== */
 .table thead th {
-  white-space: nowrap;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #6c757d;
 }
 
+/* ===== Badges de estado ===== */
 .badge-estado-NORMAL {
-  background-color: #198754;
+    background-color: #198754;
 }
 
 .badge-estado-ADVERTENCIA {
-  background-color: #ffc107;
-  color: #212529;
+    background-color: #ffc107;
+    color: #212529;
 }
 
 .badge-estado-CRITICO {
-  background-color: #dc3545;
+    background-color: #dc3545;
 }
 
+/* ===== Acciones ===== */
 .btn-icon-borrar {
-  color: #6c757d;
-  padding: 0.25rem 0.4rem;
+    color: #6c757d;
+    padding: 0.25rem 0.4rem;
 }
 
 .btn-icon-borrar:hover {
-  color: #dc3545;
+    color: #dc3545;
 }
 
+/* ===== Badges de glucosa ===== */
 .badge-glucose-severe-hypo {
-  background-color: #842029;
-  color: #fff;
+    background-color: #842029;
+    color: #fff;
 }
 
 .badge-glucose-hypo {
-  background-color: #fd7e14;
-  color: #212529;
+    background-color: #fd7e14;
+    color: #212529;
 }
 
 .badge-glucose-normal {
-  background-color: #198754;
-  color: #fff;
+    background-color: #198754;
+    color: #fff;
 }
 
 .badge-glucose-hyper {
-  background-color: #ffc107;
-  color: #212529;
+    background-color: #ffc107;
+    color: #212529;
 }
 
 .badge-glucose-severe-hyper {
-  background-color: #dc3545;
-  color: #fff;
+    background-color: #dc3545;
+    color: #fff;
 }
 
 .badge-glucose-critical {
-  background-color: #6f42c1;
-  color: #fff;
+    background-color: #6f42c1;
+    color: #fff;
 }
 
 .label-badge-fasting {
-  background-color: #0d6efd;
+    background-color: #0d6efd;
 }
 
 .label-badge-before {
-  background-color: #0dcaf0;
-  color: #212529;
+    background-color: #0dcaf0;
+    color: #212529;
 }
 
 .label-badge-after {
-  background-color: #6610f2;
+    background-color: #6610f2;
+}
+
+/* ===== Chart container ===== */
+#metricChart {
+    min-height: 260px;
+    max-height: 320px;
+}
+
+/* ===== Navbar ===== */
+.navbar {
+    border-radius: 0;
+}
+
+/* ===== Cards generales ===== */
+.card {
+    border-radius: 0.75rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.card-header {
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+}
+
+/* ===== KPI Cards (Home) ===== */
+.kpi-card {
+    border: 0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+}
+
+.kpi-alert {
+    border-left: 3px solid #ffc107 !important;
+}
+
+.kpi-danger {
+    border-left: 3px solid #dc3545 !important;
+}
+
+.kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.kpi-number {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #1e293b;
+}
+
+.kpi-label {
+    font-size: 0.7rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 500;
+}
+
+/* ===== Quick links ===== */
+.quick-link {
+    border: 1px dashed #dee2e6;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+}
+
+.quick-link:hover {
+    border-color: #0d6efd;
+    border-style: solid;
+    background: #f8faff;
+    transform: translateY(-2px);
+}
+
+/* ===== Patient cards ===== */
+.patient-card {
+    border: 1px solid #f1f5f9;
+    border-radius: 0.6rem;
+    transition: all 0.15s;
+}
+
+.patient-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.patient-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+/* ===== Purple utility ===== */
+.text-purple {
+    color: #6f42c1 !important;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .metric-value {
+        font-size: 1.3rem;
+    }
+
+    .btn-metric {
+        padding: 0.3rem 0.7rem;
+        font-size: 0.75rem;
+    }
+
+    .kpi-number {
+        font-size: 1.3rem;
+    }
+
+    .kpi-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
 }

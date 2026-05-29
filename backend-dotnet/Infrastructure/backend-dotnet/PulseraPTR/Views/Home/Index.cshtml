@@ -3,195 +3,270 @@
     ViewData["Title"] = "Panel principal";
 }
 
-<div class="d-flex align-items-center justify-content-between mb-3">
-    <div>
-        <h1 class="h3 mb-0">Panel principal</h1>
-        <p class="text-muted mb-0">Resumen operativo y últimos eventos</p>
-    </div>
+<!-- Header -->
+<div class="mb-4">
+    <h1 class="h4 fw-bold mb-1">Panel de monitoreo</h1>
+    <p class="text-muted small mb-0">Vista general del sistema · Actualización en tiempo real</p>
 </div>
 
+<!-- KPIs principales -->
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card card-metric h-100">
-            <div class="card-body">
-                <div class="text-muted small">Pacientes activos</div>
-                <div class="display-6 fw-semibold text-primary">@Model.CantidadPacientesActivos</div>
+    <div class="col-6 col-lg-3">
+        <a asp-controller="Pacientes" asp-action="Index" class="text-decoration-none">
+            <div class="card kpi-card h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-primary-subtle text-primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div>
+                        <div class="kpi-number">@Model.CantidadPacientesActivos</div>
+                        <div class="kpi-label">Pacientes activos</div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
-    <div class="col-md-3">
-        <div class="card card-metric h-100">
-            <div class="card-body">
-                <div class="text-muted small">Alertas sin leer</div>
-                <div class="display-6 fw-semibold text-warning">@Model.CantidadAlertasActivas</div>
+    <div class="col-6 col-lg-3">
+        <a asp-controller="Alertas" asp-action="Index" class="text-decoration-none">
+            <div class="card kpi-card h-100 @(Model.CantidadAlertasActivas > 0 ? "kpi-alert" : "")">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-warning-subtle text-warning">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <div>
+                        <div class="kpi-number">@Model.CantidadAlertasActivas</div>
+                        <div class="kpi-label">Alertas sin leer</div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
-    <div class="col-md-3">
-        <div class="card card-metric h-100">
-            <div class="card-body">
-                <div class="text-muted small">SOS pendientes</div>
-                <div class="display-6 fw-semibold text-danger">@Model.CantidadEventosSOSPendientes</div>
+    <div class="col-6 col-lg-3">
+        <a asp-controller="EventosSos" asp-action="Index" class="text-decoration-none">
+            <div class="card kpi-card h-100 @(Model.CantidadEventosSOSPendientes > 0 ? "kpi-danger" : "")">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-danger-subtle text-danger">
+                        <i class="bi bi-heart-pulse-fill"></i>
+                    </div>
+                    <div>
+                        <div class="kpi-number">@Model.CantidadEventosSOSPendientes</div>
+                        <div class="kpi-label">SOS pendientes</div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
-    <div class="col-md-3">
-        <div class="card card-metric h-100">
-            <div class="card-body">
-                <div class="text-muted small">FC fuera de rango</div>
-                <div class="display-6 fw-semibold text-secondary">@Model.CantidadMedicionesFueraDeRango</div>
+    <div class="col-6 col-lg-3">
+        <a asp-controller="Mediciones" asp-action="Index" class="text-decoration-none">
+            <div class="card kpi-card h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-secondary-subtle text-secondary">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                    <div>
+                        <div class="kpi-number">@Model.CantidadMedicionesFueraDeRango</div>
+                        <div class="kpi-label">FC fuera de rango</div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card card-metric h-100 border-warning">
-            <div class="card-body">
-                <div class="text-muted small">Glucemias fuera de rango</div>
-                <div class="display-6 fw-semibold text-warning">@Model.CantidadGlucemiasFueraDeRango</div>
-            </div>
-        </div>
+        </a>
     </div>
 </div>
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white fw-semibold">Últimas alertas</div>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Paciente</th>
-                            <th>Estado</th>
-                            <th>Mensaje</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach (var a in Model.UltimasAlertas)
-                    {
-                        <tr>
-                            <td class="text-nowrap">@a.FechaHora.ToString("g")</td>
-                            <td>@a.PacienteNombre</td>
-                            <td><span class="badge badge-estado-@a.Estado">@a.Estado</span></td>
-                            <td>@a.Mensaje</td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
+<!-- Accesos rápidos -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <a asp-controller="Mediciones" asp-action="Index" class="card quick-link text-decoration-none h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-graph-up fs-2 text-primary mb-2 d-block"></i>
+                <div class="fw-semibold small">Mediciones</div>
+                <div class="text-muted" style="font-size: 0.7rem">FC · Pasos · Estrés · Sueño</div>
             </div>
-        </div>
+        </a>
     </div>
-    <div class="col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white fw-semibold">Últimos eventos SOS</div>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Paciente</th>
-                            <th>Atendido</th>
-                            <th>Mensaje</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach (var e in Model.UltimosEventosSos)
-                    {
-                        <tr>
-                            <td class="text-nowrap">@e.FechaHora.ToString("g")</td>
-                            <td>@e.PacienteNombre</td>
-                            <td>@(e.Atendido ? "Sí" : "No")</td>
-                            <td>@e.Mensaje</td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
+    <div class="col-6 col-md-3">
+        <a asp-controller="Glucose" asp-action="Import" class="card quick-link text-decoration-none h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-droplet-half fs-2 text-purple mb-2 d-block"></i>
+                <div class="fw-semibold small">Glucemia</div>
+                <div class="text-muted" style="font-size: 0.7rem">Importar mySugr · Dashboard</div>
             </div>
-        </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a asp-controller="Pacientes" asp-action="Index" class="card quick-link text-decoration-none h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-person-badge fs-2 text-success mb-2 d-block"></i>
+                <div class="fw-semibold small">Pacientes</div>
+                <div class="text-muted" style="font-size: 0.7rem">Historial · Detalles</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a asp-controller="Alertas" asp-action="Index" class="card quick-link text-decoration-none h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-bell-fill fs-2 text-warning mb-2 d-block"></i>
+                <div class="fw-semibold small">Alertas y SOS</div>
+                <div class="text-muted" style="font-size: 0.7rem">Emergencias · Historial</div>
+            </div>
+        </a>
     </div>
 </div>
 
-<div class="card shadow-sm mt-4">
-    <div class="card-header bg-white fw-semibold">Últimas glucemias fuera de rango</div>
-    <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Fecha (UTC)</th>
-                    <th>Paciente</th>
-                    <th>Valor</th>
-                    <th>Rango</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (Model.UltimasGlucemiasFueraDeRango.Count == 0)
-            {
-                <tr>
-                    <td colspan="5" class="text-muted">Sin glucemias fuera de rango recientes.</td>
-                </tr>
-            }
-            else
-            {
-                @foreach (var g in Model.UltimasGlucemiasFueraDeRango)
-                {
-                    <tr>
-                        <td class="text-nowrap">@g.FechaHoraUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td>@g.PacienteNombre</td>
-                        <td class="fw-semibold">@g.GlucosaMgDl mg/dL</td>
-                        <td>@g.BandaTexto</td>
-                        <td class="text-end">
-                            <a class="btn btn-sm btn-outline-warning" asp-controller="Glucose" asp-action="Dashboard" asp-route-id="@g.PacienteId">Ver glucemia</a>
-                        </td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </table>
+<!-- Pacientes con estado actual -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center border-0 pt-3">
+        <span class="fw-semibold">Estado de pacientes</span>
     </div>
-</div>
-
-<div class="card shadow-sm mt-4">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">Pacientes y estado actual</span>
-        <a class="btn btn-sm btn-outline-primary" asp-controller="Mediciones" asp-action="Index">Ver todas las mediciones</a>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Paciente</th>
-                    <th>Estado actual</th>
-                    <th>Última medición</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
+    <div class="card-body pt-0">
+        <div class="row g-3">
             @foreach (var p in Model.EstadoActualPorPaciente)
             {
-                <tr>
-                    <td>@p.Nombre</td>
-                    <td>
-                        @if (p.EstadoActual is null)
-                        {
-                            <span class="badge bg-secondary">Sin mediciones</span>
-                        }
-                        else
-                        {
-                            <span class="badge badge-estado-@p.EstadoActual">@p.EstadoActual</span>
-                        }
-                    </td>
-                    <td>@(p.UltimaMedicionFechaHora?.ToString("g") ?? "-")</td>
-                    <td class="text-end">
-                        <a class="btn btn-sm btn-outline-secondary" asp-controller="Pacientes" asp-action="Details" asp-route-id="@p.PacienteId">Detalle</a>
-                    </td>
-                </tr>
+                <div class="col-md-6 col-lg-4">
+                    <a asp-controller="Pacientes" asp-action="Details" asp-route-id="@p.PacienteId" class="text-decoration-none">
+                        <div class="card patient-card h-100">
+                            <div class="card-body d-flex align-items-center gap-3">
+                                <div class="patient-avatar">
+                                    @p.Nombre[0]
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-semibold text-dark">@p.Nombre</div>
+                                    <div class="text-muted" style="font-size: 0.75rem">
+                                        @(p.UltimaMedicionFechaHora?.ToString("dd/MM HH:mm") ?? "Sin mediciones")
+                                    </div>
+                                </div>
+                                <div>
+                                    @if (p.EstadoActual is null)
+                                    {
+                                        <span class="badge bg-light text-muted border">—</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-estado-@p.EstadoActual">@p.EstadoActual</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
             }
-            </tbody>
-        </table>
+        </div>
     </div>
 </div>
+
+<!-- Glucemias fuera de rango + últimos eventos -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">
+                    <i class="bi bi-droplet-fill text-warning me-1"></i>
+                    Glucemias fuera de rango
+                    @if (Model.CantidadGlucemiasFueraDeRango > 0)
+                    {
+                        <span class="badge bg-warning text-dark ms-1">@Model.CantidadGlucemiasFueraDeRango</span>
+                    }
+                </span>
+            </div>
+            <div class="card-body pt-0">
+                @if (Model.UltimasGlucemiasFueraDeRango.Count == 0)
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle fs-3 d-block mb-2 text-success"></i>
+                        <span>Sin glucemias fuera de rango recientes</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var g in Model.UltimasGlucemiasFueraDeRango.Take(5))
+                        {
+                            <a asp-controller="Glucose" asp-action="Dashboard" asp-route-id="@g.PacienteId" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-0 border-start-0 border-end-0">
+                                <div>
+                                    <div class="fw-medium small">@g.PacienteNombre</div>
+                                    <div class="text-muted" style="font-size: 0.7rem">@g.FechaHoraUtc.ToString("dd/MM HH:mm")</div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="fw-bold">@g.GlucosaMgDl mg/dL</span>
+                                    <div class="text-muted" style="font-size: 0.7rem">@g.BandaTexto</div>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">
+                    <i class="bi bi-exclamation-triangle text-danger me-1"></i>
+                    Últimas alertas
+                </span>
+                <a asp-controller="Alertas" asp-action="Index" class="btn btn-sm btn-outline-secondary">Ver todas</a>
+            </div>
+            <div class="card-body pt-0">
+                @if (Model.UltimasAlertas.Count == 0)
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle fs-3 d-block mb-2 text-success"></i>
+                        <span>Sin alertas recientes</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var a in Model.UltimasAlertas.Take(5))
+                        {
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 border-start-0 border-end-0">
+                                <div>
+                                    <div class="fw-medium small">@a.PacienteNombre</div>
+                                    <div class="text-muted" style="font-size: 0.7rem">@a.FechaHora.ToString("dd/MM HH:mm")</div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge badge-estado-@a.Estado">@a.Estado</span>
+                                    <div class="text-muted" style="font-size: 0.7rem">@a.Mensaje</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimos SOS -->
+@if (Model.UltimosEventosSos.Any())
+{
+    <div class="card shadow-sm">
+        <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">
+                <i class="bi bi-telephone-fill text-danger me-1"></i>
+                Eventos SOS recientes
+            </span>
+            <a asp-controller="EventosSos" asp-action="Index" class="btn btn-sm btn-outline-danger">Ver todos</a>
+        </div>
+        <div class="card-body pt-0">
+            <div class="list-group list-group-flush">
+                @foreach (var e in Model.UltimosEventosSos.Take(4))
+                {
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0 border-start-0 border-end-0">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge @(e.Atendido ? "bg-success" : "bg-danger")">@(e.Atendido ? "Atendido" : "Pendiente")</span>
+                            <div>
+                                <span class="fw-medium small">@e.PacienteNombre</span>
+                                <span class="text-muted small ms-2">@e.Mensaje</span>
+                            </div>
+                        </div>
+                        <span class="text-muted" style="font-size: 0.7rem">@e.FechaHora.ToString("dd/MM HH:mm")</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script>

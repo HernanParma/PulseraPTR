@@ -40,6 +40,18 @@ public sealed class GlucoseReadingsQueryService : IGlucoseReadingsQueryService
         var window = await _readings.GetForPatientAsync(pacienteId, from, to, cancellationToken);
         var latest = await _readings.GetLatestAsync(pacienteId, cancellationToken);
 
+        // Si hay lecturas pero ninguna cae en la ventana (p. ej. datos demo con fechas viejas), usar las más recientes.
+        if (window.Count == 0)
+        {
+            var fallback = await _readings.GetRecentAsync(pacienteId, _dashOpt.RecentReadingsTake, cancellationToken);
+            if (fallback.Count > 0)
+            {
+                window = fallback.OrderBy(r => r.ReadingDateTime).ToList();
+                from = window[0].ReadingDateTime;
+                to = window[^1].ReadingDateTime;
+            }
+        }
+
         var hypo = window.Count(r => r.GlucoseMgDl < _alertOpt.HypoglycemiaMaxExclusive);
         var hyper = window.Count(r => r.GlucoseMgDl > _alertOpt.HyperglycemiaMinExclusive);
 
@@ -121,7 +133,7 @@ public sealed class GlucoseReadingsQueryService : IGlucoseReadingsQueryService
             return ordered
                 .Select(r => new GlucoseChartPointDto
                 {
-                    AtUtc = r.ReadingDateTime,
+                    AtUtc = MySugrSpanishDateTimeParser.ConvertUtcToLocalForDisplay(r.ReadingDateTime, r.TimeZone),
                     GlucoseMgDl = r.GlucoseMgDl,
                     Label = r.Label
                 })
@@ -137,7 +149,7 @@ public sealed class GlucoseReadingsQueryService : IGlucoseReadingsQueryService
             var r = ordered[idx];
             points.Add(new GlucoseChartPointDto
             {
-                AtUtc = r.ReadingDateTime,
+                AtUtc = MySugrSpanishDateTimeParser.ConvertUtcToLocalForDisplay(r.ReadingDateTime, r.TimeZone),
                 GlucoseMgDl = r.GlucoseMgDl,
                 Label = r.Label
             });

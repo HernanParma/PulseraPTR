@@ -13,6 +13,10 @@ public class MedicionConfiguration : IEntityTypeConfiguration<Medicion>
         builder.Property(m => m.FechaHora).IsRequired();
         builder.Property(m => m.ValorMedicion).IsRequired();
         builder.Property(m => m.PasosActividad);
+        builder.Property(m => m.NivelEstres);
+        builder.Property(m => m.MinutosSueno);
+        builder.Property(m => m.MinutosActividad);
+        builder.Property(m => m.CaloriasQuemadas);
         builder.Property(m => m.MensajeAlerta).HasMaxLength(1000);
         builder.Property(m => m.OrigenDato).HasMaxLength(100).IsRequired();
         builder.HasIndex(m => new { m.PacienteId, m.FechaHora });

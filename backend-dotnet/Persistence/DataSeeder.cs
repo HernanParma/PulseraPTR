@@ -10,6 +10,10 @@ public static class DataSeeder
     /// <param name="seedDemoData">Si es false, no se insertan pacientes/mediciones de ejemplo (solo datos reales vía API).</param>
     public static async Task SeedAsync(AppDbContext db, ILogger logger, bool seedDemoData, CancellationToken cancellationToken = default)
     {
+        await EnsurePacienteTecnico22PerfilAsync(db, logger, cancellationToken);
+        await EnsureGlucemiaDemoFechasRecientesAsync(db, logger, cancellationToken);
+        await SeedGlucemiaDemoAsync(db, logger, cancellationToken);
+
         if (!seedDemoData)
         {
             logger.LogInformation("Seed de demostración desactivado (Pulsera:SeedDemoData=false). Los datos llegan por la API desde la APK.");
@@ -223,5 +227,102 @@ public static class DataSeeder
 
         await db.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Seed inicial completado.");
+    }
+
+    private static async Task EnsurePacienteTecnico22PerfilAsync(AppDbContext db, ILogger logger, CancellationToken cancellationToken)
+    {
+        var paciente = await db.Pacientes.FindAsync(new object[] { 22 }, cancellationToken);
+        if (paciente is null)
+            return;
+
+        const int edad = 71;
+        const string dni = "6.789.112";
+        const string contacto = "1123516612 Laura (hija)";
+
+        if (paciente.Edad == edad && paciente.Dni == dni && paciente.ContactoEmergencia == contacto)
+            return;
+
+        paciente.Edad = edad;
+        paciente.Dni = dni;
+        paciente.ContactoEmergencia = contacto;
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Paciente 22 (Reloj en tiempo real) actualizado: edad {Edad}, DNI {Dni}.", edad, dni);
+    }
+
+    /// <summary>
+    /// Si las lecturas demo del paciente 22 quedaron con fechas fuera de la ventana del dashboard, las recorre a los últimos días.
+    /// </summary>
+    private static async Task EnsureGlucemiaDemoFechasRecientesAsync(AppDbContext db, ILogger logger, CancellationToken cancellationToken)
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-30);
+        var lecturas = await db.GlucoseReadings
+            .Where(r => r.PacienteId == 22 && r.SourceFileName == "seed-demo.csv")
+            .OrderBy(r => r.ReadingDateTime)
+            .ToListAsync(cancellationToken);
+
+        if (lecturas.Count == 0 || lecturas.Any(r => r.ReadingDateTime >= cutoff))
+            return;
+
+        var rng = new Random(42);
+        for (var i = 0; i < lecturas.Count; i++)
+        {
+            var r = lecturas[i];
+            var dt = DateTime.UtcNow.AddDays(-(lecturas.Count - 1 - i)).AddHours(8 + rng.Next(10));
+            r.ReadingDateTime = dt;
+            r.DateRaw = dt.ToString("dd/MM/yyyy");
+            r.TimeRaw = dt.ToString("HH:mm");
+            r.ImportHash = Application.Services.GlucoseImportHash.Compute(22, dt, r.GlucoseMgDl, r.Label);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Fechas de glucemia demo (paciente 22) actualizadas a los últimos {Count} días.", lecturas.Count);
+    }
+
+    private static async Task SeedGlucemiaDemoAsync(AppDbContext db, ILogger logger, CancellationToken cancellationToken)
+    {
+        if (await db.GlucoseReadings.AnyAsync(cancellationToken))
+            return;
+
+        if (!await db.Pacientes.AnyAsync(p => p.Id == 22, cancellationToken))
+            return;
+
+        logger.LogInformation("Insertando datos ficticios de glucemia para paciente 22...");
+
+        var rng = new Random(42);
+        var labels = new[] { "En ayunas", "Después de comer", "Antes de comer" };
+        var readings = new List<GlucoseReading>();
+
+        // Fechas relativas a hoy para que entren en la ventana del dashboard (últimos 30 días).
+        for (int i = 0; i < 25; i++)
+        {
+            var dt = DateTime.UtcNow.AddDays(-(24 - i)).AddHours(8 + rng.Next(10));
+            int val = i switch
+            {
+                _ when i % 7 == 0 => rng.Next(55, 85),
+                _ when i % 5 == 0 => rng.Next(185, 260),
+                _ => rng.Next(75, 155)
+            };
+            var label = labels[i % 3];
+            var hash = Application.Services.GlucoseImportHash.Compute(22, dt, val, label);
+
+            readings.Add(new GlucoseReading
+            {
+                PacienteId = 22,
+                ReadingDateTime = dt,
+                DateRaw = dt.ToString("dd/MM/yyyy"),
+                TimeRaw = dt.ToString("HH:mm"),
+                Label = label,
+                GlucoseMgDl = val,
+                TimeZone = "GMT-03:00",
+                SourceFileName = "seed-demo.csv",
+                Source = GlucoseReadingSource.MySugrCsvImport,
+                ImportHash = hash,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await db.GlucoseReadings.AddRangeAsync(readings, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Seed glucemia: {Count} lecturas insertadas.", readings.Count);
     }
 }

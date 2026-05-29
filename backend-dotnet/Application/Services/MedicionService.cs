@@ -56,6 +56,10 @@ public class MedicionService : IMedicionService
                                                 dto.OrigenDato);
         entity.Tipo = dto.Tipo;
         entity.PasosActividad = dto.PasosActividad;
+        entity.NivelEstres = dto.NivelEstres;
+        entity.MinutosSueno = dto.MinutosSueno;
+        entity.MinutosActividad = dto.MinutosActividad;
+        entity.CaloriasQuemadas = dto.CaloriasQuemadas;
 
         await _clasificacion.ClasificarMedicion(entity);
 

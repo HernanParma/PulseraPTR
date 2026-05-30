@@ -8,5 +8,6 @@ public interface IGlucoseImportService
         int pacienteId,
         Stream csvStream,
         string fileName,
+        GlucoseImportMetadata? metadata = null,
         CancellationToken cancellationToken = default);
 }

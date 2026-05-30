@@ -5,7 +5,7 @@ namespace Domain.Entities
     public class RangoValoresMedicion
     {
 
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
         public TipoMedicion TipoMedicion { get; set; }
         public int RangoEdadMinimo { get; set; }
         public int RangoEdadMaximo { get; set; }

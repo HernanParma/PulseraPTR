@@ -36,6 +36,7 @@ public sealed class GlucoseImportService : IGlucoseImportService
         int pacienteId,
         Stream csvStream,
         string fileName,
+        GlucoseImportMetadata? metadata = null,
         CancellationToken cancellationToken = default)
     {
         if (csvStream.CanSeek)
@@ -104,7 +105,9 @@ public sealed class GlucoseImportService : IGlucoseImportService
                 SourceFileName = string.IsNullOrWhiteSpace(fileName) ? null : Path.GetFileName(fileName),
                 Source = GlucoseReadingSource.MySugrCsvImport,
                 ImportHash = hash,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                ImportBatchId = metadata?.ImportBatchId,
+                EmailReceivedAtUtc = metadata?.EmailReceivedAtUtc,
             });
         }
 

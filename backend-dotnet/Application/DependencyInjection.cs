@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<IClasificacionEstadoCardiaco, ClasificacionEstadoCardiaco>();
         services.AddScoped<IPacienteService, PacienteService>();
         services.AddScoped<IMedicionService, MedicionService>();
+        services.AddScoped<IRangoValoresMedicionService, RangoValoresMedicionService>();
         services.AddScoped<IEventoEmergenciaService, EventoEmergenciaService>();
         services.AddScoped<IAlertaService, AlertaService>();
         services.AddScoped<IDashboardService, DashboardService>();
@@ -26,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<IGlucoseAlertEvaluator, GlucoseAlertEvaluator>();
         services.AddScoped<IGlucoseImportService, GlucoseImportService>();
         services.AddScoped<IGlucoseReadingsQueryService, GlucoseReadingsQueryService>();
+        services.AddScoped<IMedicionesListadoService, MedicionesListadoService>();
 
         return services;
     }

@@ -1,3 +1,97 @@
+/* ===== Navbar: campana de alertas ===== */
+.nav-link-alert {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+}
+
+.dropdown-toggle-no-caret::after {
+    display: none;
+}
+
+.nav-alertas-menu {
+    width: min(22rem, 92vw);
+    max-height: 24rem;
+    padding: 0;
+    overflow: hidden;
+}
+
+.nav-alertas-list {
+    max-height: 18rem;
+    overflow-y: auto;
+}
+
+.nav-alerta-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    border-top: 1px solid #f1f3f5;
+}
+
+.nav-alerta-item:first-child {
+    border-top: 0;
+}
+
+.nav-alerta-item--unread {
+    background: #fff8e6;
+}
+
+.nav-alerta-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.nav-alerta-meta {
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+
+.nav-alerta-msg {
+    font-size: 0.78rem;
+    color: #495057;
+    word-break: break-word;
+}
+
+.nav-alerta-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.15rem;
+}
+
+.btn-nav-alerta {
+    padding: 0.15rem 0.35rem;
+    line-height: 1;
+    color: #6c757d;
+}
+
+.btn-nav-alerta:hover {
+    color: #dc3545;
+}
+
+.btn-nav-alerta--read:hover {
+    color: #198754;
+}
+
+.nav-alert-badge {
+    position: absolute;
+    top: 0.2rem;
+    right: 0;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.3rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1.15rem;
+    text-align: center;
+    color: #fff;
+    background: #dc3545;
+    border-radius: 999px;
+    border: 2px solid #0d6efd;
+    pointer-events: none;
+}
+
 /* ===== Cards de métricas ===== */
 .card-metric,
 .metric-card {
@@ -72,6 +166,107 @@
     text-transform: uppercase;
     letter-spacing: 0.03em;
     color: #6c757d;
+}
+
+/* Mediciones — resultados a ancho completo */
+.mediciones-resultados-card {
+    width: 100%;
+    max-width: 100%;
+}
+
+.mediciones-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mediciones-resultados-table {
+    width: 100%;
+    min-width: 0;
+    font-size: 0.8125rem;
+    table-layout: fixed;
+}
+
+.mediciones-resultados-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #f8f9fa;
+    box-shadow: 0 1px 0 #dee2e6;
+    padding: 0.45rem 0.35rem;
+    vertical-align: middle;
+}
+
+.mediciones-resultados-table td {
+    padding: 0.4rem 0.35rem;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mediciones-resultados-table .col-id { width: 4%; }
+.mediciones-resultados-table .col-fecha { width: 9%; min-width: 4.5rem; }
+.mediciones-resultados-table .col-paciente { width: 14%; }
+.mediciones-resultados-table .col-tipo { width: 6%; }
+.mediciones-resultados-table .col-fc { width: 5%; }
+.mediciones-resultados-table .col-gluc { width: 5%; }
+.mediciones-resultados-table .col-pasos { width: 6%; }
+.mediciones-resultados-table .col-estres { width: 5%; }
+.mediciones-resultados-table .col-sueno { width: 5%; }
+.mediciones-resultados-table .col-act { width: 5%; }
+.mediciones-resultados-table .col-cal { width: 6%; }
+.mediciones-resultados-table .col-estado { width: 8%; }
+.mediciones-resultados-table .col-mensaje { width: 22%; }
+.mediciones-resultados-table .col-accion { width: 3%; }
+
+.mediciones-resultados-table .col-fecha {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+.mediciones-fecha-dia,
+.medicion-fecha-dia {
+    display: block;
+    font-size: 0.75rem;
+    color: #6c757d;
+    line-height: 1.2;
+}
+
+.medicion-fecha-hora {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #212529;
+    line-height: 1.25;
+}
+
+.mediciones-resultados-table .col-paciente,
+.mediciones-resultados-table .col-mensaje {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.mediciones-resultados-table .badge-tipo-registro {
+    font-size: 0.7rem;
+    padding: 0.2em 0.45em;
+}
+
+.mediciones-table-scroll-hint {
+    display: none;
+}
+
+@media (max-width: 992px) {
+    .mediciones-resultados-table {
+        table-layout: auto;
+        min-width: 900px;
+    }
+
+    .mediciones-table-scroll-hint {
+        display: block;
+    }
 }
 
 /* ===== Badges de estado ===== */

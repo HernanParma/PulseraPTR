@@ -1,4 +1,4 @@
-@model IReadOnlyList<MedicionDto>
+@model MedicionesIndexDto
 @{
     ViewData["Title"] = "Mediciones";
     var pacientes = ViewBag.Pacientes as IReadOnlyList<PacienteDto> ?? Array.Empty<PacienteDto>();
@@ -7,28 +7,38 @@
     string? filtroHasta = ViewBag.FechaHasta as string;
     var filtroEstado = ViewBag.Estado as EstadoClinico?;
 
-    var totalMediciones = Model.Count;
-    var medicionesConFc = Model.Where(m => m.FrecuenciaCardiaca > 0).ToList();
+    var filas = Model.Filas;
+    var medicionesPulsera = Model.MedicionesPulsera;
+    var totalFilas = Model.TotalFilas;
+    var pagina = Model.Pagina;
+    var totalPaginas = Model.TotalPaginas;
+
+    var totalMediciones = totalFilas;
+    var medicionesConFc = medicionesPulsera.Where(m => m.FrecuenciaCardiaca > 0).ToList();
     var fcPromedio = medicionesConFc.Any() ? (int)medicionesConFc.Average(m => m.FrecuenciaCardiaca) : 0;
     var fcMin = medicionesConFc.Any() ? medicionesConFc.Min(m => m.FrecuenciaCardiaca) : 0;
     var fcMax = medicionesConFc.Any() ? medicionesConFc.Max(m => m.FrecuenciaCardiaca) : 0;
 
-    var medicionesConPasos = Model.Where(m => m.PasosActividad.HasValue && m.PasosActividad > 0).ToList();
-    var pasosTotal = medicionesConPasos.Any() ? medicionesConPasos.Sum(m => m.PasosActividad!.Value) : 0;
-    var pasosPromedio = medicionesConPasos.Any() ? (int)medicionesConPasos.Average(m => m.PasosActividad!.Value) : 0;
+    var medicionesConPasos = medicionesPulsera.Where(m => m.PasosActividad.HasValue && m.PasosActividad > 0).ToList();
+    var hoy = DateTime.Today;
+    var pasosMaxHoy = medicionesConPasos
+        .Where(m => m.FechaHora.Date == hoy)
+        .Select(m => m.PasosActividad!.Value)
+        .DefaultIfEmpty(0)
+        .Max();
 
-    var medicionesConEstres = Model.Where(m => m.NivelEstres.HasValue).ToList();
+    var medicionesConEstres = medicionesPulsera.Where(m => m.NivelEstres.HasValue).ToList();
     var estresPromedio = medicionesConEstres.Any() ? (int)medicionesConEstres.Average(m => m.NivelEstres!.Value) : 0;
 
-    var medicionesConSueno = Model.Where(m => m.MinutosSueno.HasValue).ToList();
+    var medicionesConSueno = medicionesPulsera.Where(m => m.MinutosSueno.HasValue).ToList();
     var suenoPromedioMin = medicionesConSueno.Any() ? (int)medicionesConSueno.Average(m => m.MinutosSueno!.Value) : 0;
     var suenoHoras = suenoPromedioMin / 60;
     var suenoMinutos = suenoPromedioMin % 60;
 
-    var medicionesConActividad = Model.Where(m => m.MinutosActividad.HasValue).ToList();
+    var medicionesConActividad = medicionesPulsera.Where(m => m.MinutosActividad.HasValue).ToList();
     var actividadPromedio = medicionesConActividad.Any() ? (int)medicionesConActividad.Average(m => m.MinutosActividad!.Value) : 0;
 
-    var medicionesConCalorias = Model.Where(m => m.CaloriasQuemadas.HasValue).ToList();
+    var medicionesConCalorias = medicionesPulsera.Where(m => m.CaloriasQuemadas.HasValue).ToList();
     var caloriasPromedio = medicionesConCalorias.Any() ? (int)medicionesConCalorias.Average(m => m.CaloriasQuemadas!.Value) : 0;
 
     var pacienteSeleccionado = filtroPaciente.HasValue
@@ -119,8 +129,8 @@
         <div class="card metric-card h-100">
             <div class="card-body text-center">
                 <div class="metric-label">Pasos</div>
-                <div class="metric-value text-success">@(pasosTotal > 0 ? pasosTotal.ToString("N0") : "—")</div>
-                <div class="metric-sub">@(pasosPromedio > 0 ? $"prom. {pasosPromedio:N0}" : "sin dato")</div>
+                <div class="metric-value text-success">@(pasosMaxHoy > 0 ? pasosMaxHoy.ToString("N0") : "—")</div>
+                <div class="metric-sub">@(pasosMaxHoy > 0 ? $"máximo del día {hoy:dd/MM/yyyy}" : "sin pasos hoy")</div>
             </div>
         </div>
     </div>
@@ -129,7 +139,7 @@
             <div class="card-body text-center">
                 <div class="metric-label">Estrés promedio</div>
                 <div class="metric-value text-secondary">@(estresPromedio > 0 ? estresPromedio.ToString() : "—")</div>
-                <div class="metric-sub">@(estresPromedio > 0 ? "sin dato" : "sin dato")</div>
+                <div class="metric-sub">@(estresPromedio > 0 ? "pts (0-100)" : "sin dato")</div>
             </div>
         </div>
     </div>
@@ -229,78 +239,189 @@
 </div>
 
 <!-- Tabla de datos -->
-<div class="card shadow-sm">
-    <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-        <span>Resultados (@Model.Count)</span>
-        <span class="text-muted small">Se muestran todas las mediciones que coinciden con el filtro</span>
+<div class="card shadow-sm mediciones-resultados-card">
+    <div class="card-header bg-white fw-semibold d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span>Resultados (@totalFilas)</span>
+        <span class="text-muted small">
+            Pulsera y glucemia mySugr · mostrando @Model.IndicePrimerRegistro–@Model.IndiceUltimoRegistro de @totalFilas
+        </span>
     </div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
+    <div class="table-responsive mediciones-table-wrap">
+        <table class="table table-sm table-hover mb-0 align-middle mediciones-resultados-table">
             <thead class="table-light">
                 <tr>
-                    <th>Id</th>
-                    <th>Fecha y hora</th>
-                    <th>Paciente</th>
-                    <th>FC (lpm)</th>
-                    <th>Pasos</th>
-                    <th>Estado</th>
-                    <th>Fuera de rango</th>
-                    <th>Origen</th>
-                    <th>Mensaje</th>
-                    <th class="text-end" style="width:1%">Eliminar</th>
+                    <th class="col-id" title="Identificador">Id</th>
+                    <th class="col-fecha" title="Fecha y hora">Fecha / Hora</th>
+                    <th class="col-paciente" title="Paciente">Paciente</th>
+                    <th class="col-tipo" title="Tipo de registro">Tipo</th>
+                    <th class="col-fc" title="Frecuencia cardíaca">FC</th>
+                    <th class="col-gluc" title="Glucemia">Gluc.</th>
+                    <th class="col-pasos" title="Pasos">Pasos</th>
+                    <th class="col-estres" title="Estrés">Estrés</th>
+                    <th class="col-sueno" title="Sueño">Sueño</th>
+                    <th class="col-act" title="Actividad (minutos)">Act.</th>
+                    <th class="col-cal" title="Calorías">Cal.</th>
+                    <th class="col-estado" title="Estado clínico">Estado</th>
+                    <th class="col-mensaje" title="Mensaje">Mensaje</th>
+                    <th class="col-accion text-end" title="Eliminar"> </th>
                 </tr>
             </thead>
             <tbody>
-            @foreach (var m in Model)
+            @foreach (var f in filas)
             {
-                <tr>
-                    <td>@m.Id</td>
-                    <td class="text-nowrap">@m.FechaHora.ToString("g")</td>
-                    <td>@m.PacienteNombre</td>
-                    <td>@m.FrecuenciaCardiaca</td>
-                    <td>@(m.PasosActividad?.ToString("N0") ?? "-")</td>
-                    <td><span class="badge badge-estado-@m.Estado">@m.Estado</span></td>
-                    <td>
-                        @if (m.EsFueraDeRango)
+                var esGlucemia = f.Tipo == MedicionListadoTipo.Glucemia;
+                <tr class="@(esGlucemia ? "table-row-glucemia" : "")">
+                    <td class="col-id">@f.Id</td>
+                    <td class="col-fecha">
+                        <span class="medicion-fecha-dia">@f.FechaHora.ToString("dd/MM/yy")</span>
+                        <span class="medicion-fecha-hora">@f.FechaHora.ToString("HH:mm")</span>
+                    </td>
+                    <td class="col-paciente text-break">@f.PacienteNombre</td>
+                    <td class="col-tipo">
+                        @if (esGlucemia)
                         {
-                            <span class="badge bg-warning text-dark">Sí</span>
+                            <span class="badge bg-purple-subtle text-purple border badge-tipo-registro" style="--bs-bg-opacity:1;background-color:rgba(111,66,193,.12);color:#6f42c1">Gluc.</span>
                         }
                         else
                         {
-                            <span class="badge bg-success">No</span>
+                            <span class="badge bg-light text-dark border badge-tipo-registro">Pulsera</span>
                         }
                     </td>
-                    <td>@m.OrigenDato</td>
-                    <td>@(m.MensajeAlerta ?? "-")</td>
-                    <td class="text-end">
-                        <form asp-action="Delete" asp-route-id="@m.Id" method="post" class="d-inline"
-                              onsubmit="return confirm('¿Eliminar esta medición de forma permanente?');">
-                            @Html.AntiForgeryToken()
-                            @if (filtroPaciente.HasValue)
-                            {
-                                <input type="hidden" name="pacienteId" value="@filtroPaciente.Value" />
-                            }
-                            @if (!string.IsNullOrEmpty(filtroDesde))
-                            {
-                                <input type="hidden" name="fechaDesde" value="@filtroDesde" />
-                            }
-                            @if (!string.IsNullOrEmpty(filtroHasta))
-                            {
-                                <input type="hidden" name="fechaHasta" value="@filtroHasta" />
-                            }
-                            @if (filtroEstado.HasValue)
-                            {
-                                <input type="hidden" name="estado" value="@filtroEstado.Value" />
-                            }
-                            <button type="submit" class="btn btn-sm btn-link btn-icon-borrar p-0 border-0" title="Eliminar medición" aria-label="Eliminar medición">
-                                <i class="bi bi-trash fs-5"></i>
-                            </button>
-                        </form>
+                    <td class="col-fc">@(f.FrecuenciaCardiaca?.ToString() ?? "-")</td>
+                    <td class="col-gluc text-nowrap">@(f.GlucemiaMgDl.HasValue ? $"{f.GlucemiaMgDl}" : "-")</td>
+                    <td class="col-pasos">@(f.PasosActividad?.ToString("N0") ?? "-")</td>
+                    <td class="col-estres">@(f.NivelEstres?.ToString() ?? "-")</td>
+                    <td class="col-sueno text-nowrap">@(f.MinutosSueno.HasValue ? $"{f.MinutosSueno}m" : "-")</td>
+                    <td class="col-act">@(f.MinutosActividad?.ToString() ?? "-")</td>
+                    <td class="col-cal">@(f.CaloriasQuemadas?.ToString("N0") ?? "-")</td>
+                    <td class="col-estado">
+                        @if (f.Estado is null)
+                        {
+                            <span class="badge bg-light text-muted border">—</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-estado-@f.Estado">@f.Estado</span>
+                        }
+                    </td>
+                    <td class="col-mensaje text-break" title="@(f.Mensaje ?? "")">@(f.Mensaje ?? "-")</td>
+                    <td class="col-accion text-end">
+                        @if (f.PuedeEliminar)
+                        {
+                            <form asp-action="Delete" asp-route-id="@f.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('¿Eliminar esta medición de forma permanente?');">
+                                @Html.AntiForgeryToken()
+                                @if (filtroPaciente.HasValue)
+                                {
+                                    <input type="hidden" name="pacienteId" value="@filtroPaciente.Value" />
+                                }
+                                @if (!string.IsNullOrEmpty(filtroDesde))
+                                {
+                                    <input type="hidden" name="fechaDesde" value="@filtroDesde" />
+                                }
+                                @if (!string.IsNullOrEmpty(filtroHasta))
+                                {
+                                    <input type="hidden" name="fechaHasta" value="@filtroHasta" />
+                                }
+                                @if (filtroEstado.HasValue)
+                                {
+                                    <input type="hidden" name="estado" value="@filtroEstado.Value" />
+                                }
+                                @if (pagina > 1)
+                                {
+                                    <input type="hidden" name="pagina" value="@pagina" />
+                                }
+                                <button type="submit" class="btn btn-sm btn-link btn-icon-borrar p-0 border-0" title="Eliminar medición" aria-label="Eliminar medición">
+                                    <i class="bi bi-trash fs-5"></i>
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-muted small" title="Las lecturas mySugr se gestionan por importación">—</span>
+                        }
                     </td>
                 </tr>
             }
             </tbody>
         </table>
+    </div>
+    <div class="card-footer bg-white py-2">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="text-muted small mediciones-table-scroll-hint mb-0">
+                Si no ves todas las columnas, deslizá horizontalmente sobre la tabla.
+            </span>
+            @if (totalPaginas > 1)
+            {
+                <nav aria-label="Paginación de resultados">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(pagina <= 1 ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-pacienteId="@filtroPaciente"
+                               asp-route-fechaDesde="@filtroDesde"
+                               asp-route-fechaHasta="@filtroHasta"
+                               asp-route-estado="@filtroEstado"
+                               asp-route-pagina="@(pagina - 1)">Anterior</a>
+                        </li>
+                        @{
+                            var desdePag = Math.Max(1, pagina - 2);
+                            var hastaPag = Math.Min(totalPaginas, pagina + 2);
+                        }
+                        @if (desdePag > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-pacienteId="@filtroPaciente"
+                                   asp-route-fechaDesde="@filtroDesde"
+                                   asp-route-fechaHasta="@filtroHasta"
+                                   asp-route-estado="@filtroEstado"
+                                   asp-route-pagina="1">1</a>
+                            </li>
+                            @if (desdePag > 2)
+                            {
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            }
+                        }
+                        @for (var p = desdePag; p <= hastaPag; p++)
+                        {
+                            <li class="page-item @(p == pagina ? "active" : "")">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-pacienteId="@filtroPaciente"
+                                   asp-route-fechaDesde="@filtroDesde"
+                                   asp-route-fechaHasta="@filtroHasta"
+                                   asp-route-estado="@filtroEstado"
+                                   asp-route-pagina="@p">@p</a>
+                            </li>
+                        }
+                        @if (hastaPag < totalPaginas)
+                        {
+                            @if (hastaPag < totalPaginas - 1)
+                            {
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            }
+                            <li class="page-item">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-pacienteId="@filtroPaciente"
+                                   asp-route-fechaDesde="@filtroDesde"
+                                   asp-route-fechaHasta="@filtroHasta"
+                                   asp-route-estado="@filtroEstado"
+                                   asp-route-pagina="@totalPaginas">@totalPaginas</a>
+                            </li>
+                        }
+                        <li class="page-item @(pagina >= totalPaginas ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-pacienteId="@filtroPaciente"
+                               asp-route-fechaDesde="@filtroDesde"
+                               asp-route-fechaHasta="@filtroHasta"
+                               asp-route-estado="@filtroEstado"
+                               asp-route-pagina="@(pagina + 1)">Siguiente</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
     </div>
 </div>
 
@@ -308,7 +429,7 @@
 <script>
 (function() {
     // Datos de mediciones serializados desde el servidor
-    const mediciones = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(m => new {
+    const mediciones = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(medicionesPulsera.Select(m => new {
         fecha = m.FechaHora.ToString("yyyy-MM-dd HH:mm"),
         fc = m.FrecuenciaCardiaca,
         pasos = m.PasosActividad,
@@ -319,6 +440,8 @@
     }).OrderBy(m => m.fecha)));
 
     const pacienteId = @(filtroPaciente.HasValue ? filtroPaciente.Value.ToString() : "null");
+    const pacientesGlucemia = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        pacientes.Select(p => new { id = p.Id, nombre = p.Nombre })));
 
     const ctx = document.getElementById('metricChart').getContext('2d');
     let chart = null;
@@ -338,14 +461,19 @@
         },
         pasos: {
             title: 'Pasos',
-            subtitle: 'Pasos por medición',
+            subtitle: 'Máximo registrado por día (no se suman lecturas del mismo día)',
             color: '#198754',
             bgColor: 'rgba(25, 135, 84, 0.15)',
             type: 'bar',
             unit: 'pasos',
             getData: () => {
-                const data = mediciones.filter(m => m.pasos != null && m.pasos > 0);
-                return { labels: data.map(m => m.fecha), values: data.map(m => m.pasos) };
+                const byDay = {};
+                mediciones.filter(m => m.pasos != null && m.pasos > 0).forEach(m => {
+                    const day = m.fecha.substring(0, 10);
+                    byDay[day] = Math.max(byDay[day] || 0, m.pasos);
+                });
+                const labels = Object.keys(byDay).sort();
+                return { labels, values: labels.map(d => byDay[d]) };
             }
         },
         estres: {
@@ -398,7 +526,7 @@
         },
         glucemia: {
             title: 'Glucemia',
-            subtitle: 'mg/dL',
+            subtitle: 'mg/dL (importación mySugr; también en la tabla de resultados)',
             color: '#6f42c1',
             bgColor: 'rgba(111, 66, 193, 0.1)',
             type: 'line',
@@ -505,36 +633,52 @@
         document.getElementById('summaryDetail').textContent = detail;
     }
 
+    async function fetchGlucoseReadings(patientId) {
+        const resp = await fetch(`/api/glucose/readings/${patientId}`);
+        if (!resp.ok) return [];
+        return await resp.json();
+    }
+
     async function loadGlucemiaChart() {
         const config = metricConfig.glucemia;
-        if (!pacienteId) {
-            updateSummary('—', 'Seleccioná un paciente para ver glucemia');
-            document.getElementById('chartDataCount').textContent = '0 datos';
-            drawEmptyChart(config);
-            return;
-        }
 
         try {
-            const resp = await fetch(`/api/glucose/readings/${pacienteId}`);
-            if (!resp.ok) throw new Error('Error al cargar');
-            const readings = await resp.json();
+            let readings = [];
+            if (pacienteId) {
+                readings = await fetchGlucoseReadings(pacienteId);
+            } else if (pacientesGlucemia.length > 0) {
+                const batches = await Promise.all(
+                    pacientesGlucemia.map(p => fetchGlucoseReadings(p.id)));
+                const nameById = Object.fromEntries(pacientesGlucemia.map(p => [p.id, p.nombre]));
+                batches.forEach((list, i) => {
+                    const nombre = nameById[pacientesGlucemia[i].id];
+                    list.forEach(r => readings.push({ ...r, pacienteNombre: nombre }));
+                });
+            }
 
             if (!readings || readings.length === 0) {
-                updateSummary('—', 'Sin lecturas de glucemia');
+                const hint = pacienteId
+                    ? 'Sin lecturas mySugr para este paciente (importá CSV o mail con PacienteId correcto)'
+                    : 'Sin lecturas mySugr en ningún paciente';
+                updateSummary('—', hint);
                 document.getElementById('chartDataCount').textContent = '0 datos';
                 drawEmptyChart(config);
                 return;
             }
 
             const sorted = readings.sort((a, b) => a.readingDateTimeUtc.localeCompare(b.readingDateTimeUtc));
-            const labels = sorted.map(r => r.readingDateTimeUtc.substring(0, 16).replace('T', ' '));
+            const labels = sorted.map(r => {
+                const t = r.readingDateTimeUtc.substring(0, 16).replace('T', ' ');
+                return r.pacienteNombre ? `${t} · ${r.pacienteNombre}` : t;
+            });
             const values = sorted.map(r => r.glucoseMgDl);
 
             document.getElementById('chartDataCount').textContent = `${values.length} datos`;
             const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
             const min = Math.min(...values);
             const max = Math.max(...values);
-            updateSummary(`${avg} mg/dL`, `Promedio ${avg} mg/dL · mínimo ${min} mg/dL · máximo ${max} mg/dL`);
+            const scope = pacienteId ? '' : ' · todos los pacientes';
+            updateSummary(`${avg} mg/dL`, `Promedio ${avg} mg/dL · mínimo ${min} mg/dL · máximo ${max} mg/dL${scope}`);
 
             if (chart) chart.destroy();
             chart = new Chart(ctx, {

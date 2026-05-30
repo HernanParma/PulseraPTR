@@ -301,10 +301,20 @@ public sealed class GlucoseEmailImportWorker : BackgroundService
             await part.Content.DecodeToAsync(stream, cancellationToken);
             stream.Position = 0;
 
+            var receivedUtc = message.Date != DateTimeOffset.MinValue
+                ? message.Date.UtcDateTime
+                : DateTime.UtcNow;
+            var importMetadata = new Application.Dtos.Glucose.GlucoseImportMetadata
+            {
+                ImportBatchId = $"email-{pacienteId}-{uid.Id}",
+                EmailReceivedAtUtc = receivedUtc,
+            };
+
             await using (var scope = _serviceProvider.CreateAsyncScope())
             {
                 var import = scope.ServiceProvider.GetRequiredService<IGlucoseImportService>();
-                var result = await import.ImportMySugrCsvAsync(pacienteId, stream, fileName, cancellationToken);
+                var result = await import.ImportMySugrCsvAsync(
+                    pacienteId, stream, fileName, importMetadata, cancellationToken);
 
                 _logger.LogInformation(
                     "[GlucoseEmail] Importación CSV finalizada | PacienteId={PacienteId} | archivo={File} | filasLeídas={Read} | importadas={Imported} | duplicadas={Dup} | descartadas={Disc} | líneasDeError={ErrCount}",

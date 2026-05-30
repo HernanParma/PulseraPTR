@@ -56,7 +56,12 @@ public sealed class GlucoseController : Controller
         }
 
         await using var stream = file.OpenReadStream();
-        var result = await _import.ImportMySugrCsvAsync(pacienteId, stream, file.FileName, cancellationToken);
+        var metadata = new Application.Dtos.Glucose.GlucoseImportMetadata
+        {
+            ImportBatchId = $"upload-{pacienteId}-{DateTime.UtcNow:yyyyMMddHHmmss}",
+            EmailReceivedAtUtc = DateTime.UtcNow,
+        };
+        var result = await _import.ImportMySugrCsvAsync(pacienteId, stream, file.FileName, metadata, cancellationToken);
         ViewBag.ImportResult = result;
 
         return View();

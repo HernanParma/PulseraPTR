@@ -1,0 +1,30 @@
+@model int
+@{
+    var label = Model == 1 ? "1 alerta sin atender" : $"{Model} alertas sin atender";
+}
+<div class="dropdown nav-alertas-dropdown-wrap">
+    <button type="button"
+            class="btn btn-link nav-link nav-link-alert position-relative px-2 py-2 dropdown-toggle-no-caret"
+            id="navAlertasBell"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside"
+            aria-expanded="false"
+            title="@(Model > 0 ? label : "Alertas")"
+            aria-label="@(Model > 0 ? label : "Alertas")">
+        <i class="bi bi-bell-fill fs-5 text-white" aria-hidden="true"></i>
+        <span id="navAlertasBadge"
+              class="nav-alert-badge @(Model > 0 ? "" : "d-none")"
+              @(Model > 0 ? "" : "hidden")>
+            @(Model > 99 ? "99+" : Model.ToString())
+        </span>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end shadow nav-alertas-menu" aria-labelledby="navAlertasBell">
+        <div class="dropdown-header d-flex justify-content-between align-items-center py-2">
+            <span class="fw-semibold">Alertas</span>
+            <a class="small text-decoration-none" asp-controller="Alertas" asp-action="Index">Ver todas</a>
+        </div>
+        <div id="navAlertasList" class="nav-alertas-list">
+            <div class="dropdown-item-text text-muted small px-3 py-2">Cargando…</div>
+        </div>
+    </div>
+</div>

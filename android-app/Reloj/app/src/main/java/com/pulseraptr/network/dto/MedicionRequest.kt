@@ -17,6 +17,21 @@ data class MedicionRequest(
     @SerializedName("frecuenciaCardiaca")
     val frecuenciaCardiaca: Int,
 
+    @SerializedName("pasosActividad")
+    val pasosActividad: Int? = null,
+
+    @SerializedName("nivelEstres")
+    val nivelEstres: Int? = null,
+
+    @SerializedName("minutosSueno")
+    val minutosSueno: Int? = null,
+
+    @SerializedName("minutosActividad")
+    val minutosActividad: Int? = null,
+
+    @SerializedName("caloriasQuemadas")
+    val caloriasQuemadas: Int? = null,
+
     @SerializedName("estado")
     val estado: EstadoClinico,
 

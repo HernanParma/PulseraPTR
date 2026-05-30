@@ -15,4 +15,10 @@ public interface IGlucoseReadingRepository
     Task<IReadOnlyList<GlucoseReading>> GetRecentAsync(int pacienteId, int take, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<GlucoseReading>> GetRecentAcrossPatientsAsync(int take, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<GlucoseReading>> BuscarAsync(
+        int? pacienteId,
+        DateTime? fechaDesde,
+        DateTime? fechaHasta,
+        CancellationToken cancellationToken = default);
 }

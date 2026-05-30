@@ -86,14 +86,23 @@
                     <td><span class="badge badge-estado-@a.Estado">@a.Estado</span></td>
                     <td>@(a.Leida ? "Sí" : "No")</td>
                     <td>@a.Mensaje</td>
-                    <td class="text-end">
+                    <td class="text-end text-nowrap">
                         @if (!a.Leida)
                         {
                             <form asp-action="MarcarLeida" asp-route-id="@a.Id" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-success">Marcar leída</button>
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Marcar leída">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
                             </form>
                         }
+                        <form asp-action="Eliminar" asp-route-id="@a.Id" method="post" class="d-inline"
+                              onsubmit="return confirm('¿Eliminar esta alerta?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
                     </td>
                 </tr>
             }

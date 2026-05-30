@@ -55,4 +55,22 @@ public class EventoEmergenciaRepository : IEventoEmergenciaRepository
 
     public void Update(EventoEmergencia evento) =>
         _db.EventosEmergencia.Update(evento);
+
+    public async Task<EventoEmergencia?> GetSosPorPacienteYFechaAsync(
+        int pacienteId,
+        DateTime fechaHora,
+        TimeSpan ventana,
+        CancellationToken cancellationToken = default)
+    {
+        var desde = fechaHora.Subtract(ventana);
+        var hasta = fechaHora.Add(ventana);
+
+        return await _db.EventosEmergencia
+            .Where(e => e.PacienteId == pacienteId
+                        && e.TipoEvento == TipoEventoEmergencia.SOS
+                        && e.FechaHora >= desde
+                        && e.FechaHora <= hasta)
+            .OrderByDescending(e => e.FechaHora)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }

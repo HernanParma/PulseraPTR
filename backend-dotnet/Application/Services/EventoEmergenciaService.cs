@@ -109,6 +109,9 @@ public class EventoEmergenciaService : IEventoEmergenciaService
 
         entity.Atendido = true;
         _eventos.Update(entity);
+
+        await SosAlertaSynchronizer.MarcarAlertasSosLeidasSiExistenAsync(_alertas, entity, cancellationToken);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

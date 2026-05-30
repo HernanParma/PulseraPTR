@@ -24,7 +24,11 @@ public class PulseraRealtimeNotifier : IPulseraRealtimeNotifier
         _hubContext.Clients.Group("dashboard").SendAsync("nuevoEventoSos", evento, cancellationToken);
 
     public Task NotificarGlucemiaActualizadaAsync(int pacienteId, CancellationToken cancellationToken = default) =>
-        _hubContext.Clients
-            .Group(PulseraHub.GlucoseDashboardGroupName(pacienteId))
-            .SendAsync("glucemiaActualizada", new { pacienteId }, cancellationToken);
+        Task.WhenAll(
+            _hubContext.Clients
+                .Group(PulseraHub.GlucoseDashboardGroupName(pacienteId))
+                .SendAsync("glucemiaActualizada", new { pacienteId }, cancellationToken),
+            _hubContext.Clients
+                .Group("dashboard")
+                .SendAsync("glucemiaActualizada", new { pacienteId }, cancellationToken));
 }

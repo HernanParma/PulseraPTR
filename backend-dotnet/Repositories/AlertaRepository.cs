@@ -1,5 +1,6 @@
 using Application.Interfaces.Repositories;
 using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,4 +46,42 @@ public class AlertaRepository : IAlertaRepository
 
     public void Update(Alerta alerta) =>
         _db.Alertas.Update(alerta);
+
+    public void Remove(Alerta alerta) =>
+        _db.Alertas.Remove(alerta);
+
+    public async Task<IReadOnlyList<Alerta>> GetSosPorPacienteYFechaAsync(
+        int pacienteId,
+        DateTime fechaHora,
+        TimeSpan ventana,
+        CancellationToken cancellationToken = default)
+    {
+        var desde = fechaHora.Subtract(ventana);
+        var hasta = fechaHora.Add(ventana);
+
+        return await _db.Alertas
+            .Where(a => a.PacienteId == pacienteId
+                        && a.FechaHora >= desde
+                        && a.FechaHora <= hasta
+                        && (a.TipoAlerta == TipoAlerta.SosManual || a.TipoAlerta == TipoAlerta.SosAutomatico))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> ExisteAlertaMedicionEnVentanaAsync(
+        int pacienteId,
+        DateTime fechaHora,
+        TimeSpan ventana,
+        CancellationToken cancellationToken = default)
+    {
+        var desde = fechaHora.Subtract(ventana);
+        var hasta = fechaHora.Add(ventana);
+
+        return await _db.Alertas.AnyAsync(
+            a => a.PacienteId == pacienteId
+                 && a.FechaHora >= desde
+                 && a.FechaHora <= hasta
+                 && (a.TipoAlerta == TipoAlerta.FrecuenciaCardiaca
+                     || a.TipoAlerta == TipoAlerta.SosAutomatico),
+            cancellationToken);
+    }
 }

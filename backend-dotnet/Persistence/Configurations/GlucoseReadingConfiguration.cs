@@ -21,8 +21,11 @@ public class GlucoseReadingConfiguration : IEntityTypeConfiguration<GlucoseReadi
         builder.Property(x => x.Source).HasConversion<int>().IsRequired();
         builder.Property(x => x.ImportHash).HasMaxLength(64).IsRequired();
         builder.Property(x => x.CreatedAt).IsRequired();
+        builder.Property(x => x.ImportBatchId).HasMaxLength(128);
+        builder.Property(x => x.EmailReceivedAtUtc);
 
         builder.HasIndex(x => new { x.PacienteId, x.ImportHash }).IsUnique();
+        builder.HasIndex(x => x.ImportBatchId);
         builder.HasIndex(x => new { x.PacienteId, x.ReadingDateTime });
 
         builder.HasOne(x => x.Paciente)

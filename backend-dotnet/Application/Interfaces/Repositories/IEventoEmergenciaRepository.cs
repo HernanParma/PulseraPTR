@@ -16,4 +16,10 @@ public interface IEventoEmergenciaRepository
     void Update(EventoEmergencia evento);
     Task<int> ContarSosPendientesAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<EventoEmergencia>> GetUltimosAsync(int cantidad, TipoEventoEmergencia tipoEvento, CancellationToken cancellationToken = default);
+
+    Task<EventoEmergencia?> GetSosPorPacienteYFechaAsync(
+        int pacienteId,
+        DateTime fechaHora,
+        TimeSpan ventana,
+        CancellationToken cancellationToken = default);
 }

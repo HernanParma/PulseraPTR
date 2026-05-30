@@ -31,4 +31,12 @@ public class AlertasController : Controller
         await _alertas.MarcarLeidaAsync(id, cancellationToken);
         return RedirectToAction(nameof(Index));
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Eliminar(int id, CancellationToken cancellationToken)
+    {
+        await _alertas.EliminarAsync(id, cancellationToken);
+        return RedirectToAction(nameof(Index));
+    }
 }

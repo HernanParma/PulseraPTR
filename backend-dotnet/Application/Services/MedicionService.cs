@@ -56,29 +56,42 @@ public class MedicionService : IMedicionService
                                                 dto.OrigenDato);
         entity.Tipo = dto.Tipo;
         entity.PasosActividad = dto.PasosActividad;
-        entity.NivelEstres = dto.NivelEstres;
+        // Estrés: APK envía valor simulado; si no, el backend lo genera (20–80).
+        entity.NivelEstres = dto.NivelEstres ?? Random.Shared.Next(20, 81);
         entity.MinutosSueno = dto.MinutosSueno;
         entity.MinutosActividad = dto.MinutosActividad;
         entity.CaloriasQuemadas = dto.CaloriasQuemadas;
 
         await _clasificacion.ClasificarMedicion(entity);
 
+        // Mensaje según clasificación del backend (no el texto de la APK, que usa otros umbrales).
+        entity.MensajeAlerta = MedicionMensajeBuilder.DesdeMedicion(entity);
+
         await _mediciones.AddAsync(entity, cancellationToken);
 
+        // Solo alertas clínicas reales (advertencia/crítico). Nunca en cada medición NORMAL.
         Alerta? alertaGenerada = null;
-        if (entity.EsFueraDeRango)
+        var crearAlertas = _configuration.GetValue("Pulsera:CrearAlertaEnMedicionFueraDeRango", true);
+        if (crearAlertas && entity.Estado is EstadoClinico.ADVERTENCIA or EstadoClinico.CRITICO)
         {
-            alertaGenerada = new Alerta
-            {
-                PacienteId = dto.PacienteId,
-                FechaHora = dto.FechaHora,
-                TipoAlerta = TipoAlerta.SosAutomatico, //NOTE: quizas deberia ser TipoAlerta.Automatica para indicar que fue generada por el sistema?
-                Estado = entity.Estado,
-                Mensaje = entity.MensajeAlerta ?? "sin mensaje",
-                Leida = false
-            };
+            var ventanaDedup = TimeSpan.FromMinutes(9);
+            var yaExiste = await _alertas.ExisteAlertaMedicionEnVentanaAsync(
+                dto.PacienteId, dto.FechaHora, ventanaDedup, cancellationToken);
 
-            await _alertas.AddAsync(alertaGenerada, cancellationToken);
+            if (!yaExiste)
+            {
+                alertaGenerada = new Alerta
+                {
+                    PacienteId = dto.PacienteId,
+                    FechaHora = dto.FechaHora,
+                    TipoAlerta = TipoAlerta.FrecuenciaCardiaca,
+                    Estado = entity.Estado,
+                    Mensaje = entity.MensajeAlerta ?? "sin mensaje",
+                    Leida = false
+                };
+
+                await _alertas.AddAsync(alertaGenerada, cancellationToken);
+            }
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

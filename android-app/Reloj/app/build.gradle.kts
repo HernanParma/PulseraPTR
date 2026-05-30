@@ -15,8 +15,8 @@ android {
         applicationId = "com.example.reloj"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 6
+        versionName = "2.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -68,4 +68,5 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.activity:activity-ktx:1.9.2")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 }

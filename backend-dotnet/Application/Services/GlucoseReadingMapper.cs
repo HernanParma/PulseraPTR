@@ -45,4 +45,12 @@ public static class GlucoseReadingMapper
 
         return GlucoseRangeBand.Normal;
     }
+
+    public static EstadoClinico ToEstadoClinico(GlucoseRangeBand band) =>
+        band switch
+        {
+            GlucoseRangeBand.Normal => EstadoClinico.NORMAL,
+            GlucoseRangeBand.Hypoglycemia or GlucoseRangeBand.Hyperglycemia => EstadoClinico.ADVERTENCIA,
+            _ => EstadoClinico.CRITICO
+        };
 }

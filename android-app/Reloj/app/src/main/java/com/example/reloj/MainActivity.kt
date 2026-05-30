@@ -22,14 +22,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
+import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.request.ReadRecordsRequest
-import androidx.health.connect.client.time.TimeRangeFilter
+import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import com.pulseraptr.network.NetworkingConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -39,17 +43,23 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.concurrent.TimeUnit
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Locale
 
 private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
 
-private val httpClient by lazy { OkHttpClient() }
+private val httpClient by lazy {
+    OkHttpClient.Builder()
+        .connectTimeout(20, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -79,20 +89,21 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/** Umbrales alineados con el backend (rango normal 60–100 lpm, crítico fuera de 50–120). */
 fun clasificarEstadoFrecuenciaCardiaca(bpm: Long): String {
     return when {
-        bpm >= 120 -> "CRITICO"
-        bpm > 100 -> "ADVERTENCIA"
-        bpm < 50 -> "ADVERTENCIA"
+        bpm > 120 || bpm < 50 -> "CRITICO"
+        bpm > 100 || bpm < 60 -> "ADVERTENCIA"
         else -> "NORMAL"
     }
 }
 
 fun generarMensajeAlerta(bpm: Long): String {
     return when {
-        bpm >= 120 -> "Frecuencia cardíaca críticamente alta"
+        bpm > 120 -> "Frecuencia cardíaca críticamente alta"
+        bpm < 50 -> "Frecuencia cardíaca críticamente baja"
         bpm > 100 -> "Frecuencia cardíaca alta"
-        bpm < 50 -> "Frecuencia cardíaca baja"
+        bpm < 60 -> "Frecuencia cardíaca baja"
         else -> "Frecuencia cardíaca normal"
     }
 }
@@ -100,8 +111,7 @@ fun generarMensajeAlerta(bpm: Long): String {
 suspend fun enviarMedicionAlBackend(
     frecuenciaCardiaca: Long,
     pasosActividad: Int?,
-    estado: String,
-    mensajeAlerta: String
+    metricas: MetricasSalud = MetricasSalud(),
 ): Pair<Boolean, String> = withContext(Dispatchers.IO) {
     try {
         val url = "${NetworkingConfig.BASE_URL}api/mediciones"
@@ -111,8 +121,10 @@ suspend fun enviarMedicionAlBackend(
             put("fechaHora", Instant.now().toString())
             put("frecuenciaCardiaca", frecuenciaCardiaca)
             if (pasosActividad != null) put("pasosActividad", pasosActividad)
-            put("estado", estado)
-            put("mensajeAlerta", mensajeAlerta)
+            metricas.nivelEstres?.let { put("nivelEstres", it) }
+            metricas.minutosSueno?.let { put("minutosSueno", it) }
+            metricas.minutosActividad?.let { put("minutosActividad", it) }
+            metricas.caloriasQuemadas?.let { put("caloriasQuemadas", it) }
             put("origenDato", "HealthConnect")
         }
 
@@ -168,96 +180,68 @@ suspend fun enviarSosAlBackend(): Pair<Boolean, String> = withContext(Dispatcher
     }
 }
 
-/** Intervalo entre lecturas automáticas en segundo plano (mismo flujo que el botón manual). */
-private const val INTERVALO_LECTURA_FC_MS = 5 * 60 * 1000L
+private fun registrarSincronizacionEnHistorial(
+    historial: MutableList<String>,
+    horaActual: () -> String,
+    resultado: ResultadoSincronizacion,
+    manual: Boolean,
+) {
+    val prefijo = if (manual) "Manual" else "Auto"
+    when {
+        resultado.omitidoPorIntervalo -> { /* sin entrada */ }
+        resultado.error != null -> {
+            historial.add(0, "${horaActual()} - $prefijo: ${resultado.error}")
+        }
+        resultado.bpm != null -> {
+            val m = resultado.metricas
+            historial.add(
+                0,
+                "${horaActual()} - $prefijo FC: ${resultado.bpm} / Pasos: ${resultado.pasosHoy ?: "—"} / " +
+                    "Estrés: ${m.nivelEstres ?: "—"} / Sueño: ${m.minutosSueno ?: "—"} min / Act: ${m.minutosActividad ?: "—"} min",
+            )
+            val msg = resultado.mensajeBackend ?: "sin respuesta"
+            historial.add(0, "${horaActual()} - ${if (resultado.enviadoAlBackend) "✓" else "✗"} $msg")
+        }
+    }
+}
 
-/**
- * Lee la última FC en Health Connect y envía al backend. Actualiza textos vía lambdas (thread-safe con estados de Compose).
- */
-private suspend fun leerYEnviarFrecuenciaCardiaca(
+private suspend fun ejecutarSincronizacionUi(
+    context: android.content.Context,
     client: HealthConnectClient,
-    permissions: Set<String>,
+    permisosOk: Boolean,
+    forzarEnvio: Boolean,
+    manual: Boolean,
     horaActual: () -> String,
     historial: MutableList<String>,
     onHeartRateText: (String) -> Unit,
     onPasosText: (String) -> Unit,
+    onEstresText: (String) -> Unit,
+    onSuenoText: (String) -> Unit,
+    onActividadText: (String) -> Unit,
+    onCaloriasText: (String) -> Unit,
     onEstado: (String) -> Unit,
     onAlerta: (String) -> Unit,
     onUltimoEvento: (String) -> Unit,
 ) {
-    try {
-        val granted = client.permissionController.getGrantedPermissions()
-        if (!granted.containsAll(permissions)) {
-            onHeartRateText("No se puede leer FC")
-            onUltimoEvento("Falta permiso de frecuencia cardíaca")
-            historial.add(0, "${horaActual()} - Falló lectura: permiso no otorgado")
-            return
-        }
-
-        val response = client.readRecords(
-            ReadRecordsRequest(
-                recordType = HeartRateRecord::class,
-                timeRangeFilter = TimeRangeFilter.between(
-                    Instant.now().minus(30, ChronoUnit.DAYS),
-                    Instant.now()
-                )
-            )
-        )
-        val stepsResponse = client.readRecords(
-            ReadRecordsRequest(
-                recordType = StepsRecord::class,
-                timeRangeFilter = TimeRangeFilter.between(
-                    Instant.now().minus(1, ChronoUnit.DAYS),
-                    Instant.now()
-                )
-            )
-        )
-
-        val records = response.records
-        if (records.isEmpty()) {
-            onHeartRateText("Sin datos de FC")
-            onUltimoEvento("Health Connect no devolvió registros")
-            historial.add(0, "${horaActual()} - Falló lectura: no hay registros de FC")
-            return
-        }
-
-        val ultimo = records.last()
-        val sample = ultimo.samples.lastOrNull()
-        if (sample == null) {
-            onHeartRateText("Registro vacío")
-            onUltimoEvento("El registro existe pero no tiene muestras")
-            historial.add(0, "${horaActual()} - Falló lectura: registro sin muestras")
-            return
-        }
-
-        val bpm = sample.beatsPerMinute.toLong()
-        val pasosUltimas24h = stepsResponse.records.sumOf { it.count }.toInt()
-        val nuevoEstado = clasificarEstadoFrecuenciaCardiaca(bpm)
-        val mensajeAlerta = generarMensajeAlerta(bpm)
-
-        onHeartRateText("$bpm bpm")
-        onPasosText("$pasosUltimas24h pasos (24h)")
-        onEstado(nuevoEstado)
-        onAlerta(mensajeAlerta)
-        onUltimoEvento("Lectura de FC obtenida")
-
-        historial.add(
-            0,
-            "${horaActual()} - FC: $bpm bpm / Pasos24h: $pasosUltimas24h / Estado: $nuevoEstado / $mensajeAlerta"
-        )
-
-        val (ok, mensaje) = enviarMedicionAlBackend(
-            frecuenciaCardiaca = bpm,
-            pasosActividad = pasosUltimas24h,
-            estado = nuevoEstado,
-            mensajeAlerta = mensajeAlerta
-        )
-        historial.add(0, "${horaActual()} - ${if (ok) "✓" else "✗"} $mensaje")
-    } catch (e: Exception) {
-        onHeartRateText("Error al leer Health Connect")
-        onUltimoEvento(e.message ?: "Error desconocido")
-        historial.add(0, "${horaActual()} - Error leyendo Health Connect")
-    }
+    val resultado = MedicionSyncHelper.sincronizar(
+        context = context,
+        client = client,
+        permisosConcedidos = permisosOk,
+        forzarEnvio = forzarEnvio,
+    )
+    MedicionSyncHelper.aplicarResultadoEnUi(
+        resultado,
+        onHeartRateText,
+        onPasosText,
+        onEstresText,
+        onSuenoText,
+        onActividadText,
+        onCaloriasText,
+        onEstado,
+        onAlerta,
+        onUltimoEvento,
+    )
+    registrarSincronizacionEnHistorial(historial, horaActual, resultado, manual)
 }
 
 @Composable
@@ -267,11 +251,16 @@ fun PantallaPrincipal(
     onOpenHealthConnect: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    val appContext = LocalContext.current.applicationContext
 
     var estado by remember { mutableStateOf("NORMAL") }
     var ultimoEvento by remember { mutableStateOf("Sin eventos") }
     var heartRateText by remember { mutableStateOf("Sin lectura todavía") }
     var pasosText by remember { mutableStateOf("Sin lectura todavía") }
+    var estresText by remember { mutableStateOf("Sin lectura todavía") }
+    var suenoText by remember { mutableStateOf("Sin lectura todavía") }
+    var actividadText by remember { mutableStateOf("Sin lectura todavía") }
+    var caloriasText by remember { mutableStateOf("Sin lectura todavía") }
     var alertaActual by remember { mutableStateOf("Sin alertas") }
 
     val historial = remember { mutableStateListOf<String>() }
@@ -282,7 +271,12 @@ fun PantallaPrincipal(
 
     val permissions = setOf(
         HealthPermission.getReadPermission(HeartRateRecord::class),
-        HealthPermission.getReadPermission(StepsRecord::class)
+        HealthPermission.getReadPermission(StepsRecord::class),
+        HealthPermission.getReadPermission(SleepSessionRecord::class),
+        HealthPermission.getReadPermission(ExerciseSessionRecord::class),
+        HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
+        HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
+        HealthPermission.getReadPermission(HeartRateVariabilityRmssdRecord::class),
     )
 
     var permisosFcListos by remember { mutableStateOf(false) }
@@ -293,8 +287,9 @@ fun PantallaPrincipal(
         ) { granted ->
             permisosFcListos = permissions.all { it in granted }
             if (permisosFcListos) {
-                ultimoEvento = "Permiso de frecuencia cardíaca otorgado"
-                historial.add(0, "${horaActual()} - Permiso Health Connect otorgado")
+                ultimoEvento = "Permisos Health Connect otorgados"
+                historial.add(0, "${horaActual()} - Permisos Health Connect otorgados (FC, pasos, sueño, ejercicio, calorías, HRV)")
+                MedicionEnvioScheduler.iniciarCadena(appContext)
             } else {
                 ultimoEvento = "Permiso denegado"
                 historial.add(0, "${horaActual()} - Permiso Health Connect denegado")
@@ -309,28 +304,36 @@ fun PantallaPrincipal(
         val granted = client.permissionController.getGrantedPermissions()
         if (permissions.all { it in granted }) {
             permisosFcListos = true
+            MedicionEnvioScheduler.iniciarCadena(appContext)
         } else {
             permissionLauncher.launch(permissions)
         }
     }
 
-    /** Con permisos: lectura inicial y repetición cada [INTERVALO_LECTURA_FC_MS]. */
+    /** Con permisos: envío automático cada 10 min mientras la app está abierta. */
     LaunchedEffect(permisosFcListos, sdkStatus) {
         if (sdkStatus != HealthConnectClient.SDK_AVAILABLE || !permisosFcListos) return@LaunchedEffect
         val client = clientProvider()
         while (isActive) {
-            leerYEnviarFrecuenciaCardiaca(
+            ejecutarSincronizacionUi(
+                context = appContext,
                 client = client,
-                permissions = permissions,
+                permisosOk = true,
+                forzarEnvio = false,
+                manual = false,
                 horaActual = ::horaActual,
                 historial = historial,
                 onHeartRateText = { heartRateText = it },
                 onPasosText = { pasosText = it },
+                onEstresText = { estresText = it },
+                onSuenoText = { suenoText = it },
+                onActividadText = { actividadText = it },
+                onCaloriasText = { caloriasText = it },
                 onEstado = { estado = it },
                 onAlerta = { alertaActual = it },
                 onUltimoEvento = { ultimoEvento = it },
             )
-            delay(INTERVALO_LECTURA_FC_MS)
+            delay(NetworkingConfig.INTERVALO_ENVIO_AUTOMATICO_MS)
         }
     }
 
@@ -346,14 +349,28 @@ fun PantallaPrincipal(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Servidor: ${NetworkingConfig.BASE_URL}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Estado actual: $estado")
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Último evento: $ultimoEvento")
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Frecuencia cardíaca: $heartRateText")
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Actividad: $pasosText")
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(text = "Pasos (24h): $pasosText")
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(text = "Estrés: $estresText")
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(text = "Sueño: $suenoText")
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(text = "Actividad: $actividadText")
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(text = "Calorías: $caloriasText")
+            Spacer(modifier = Modifier.height(6.dp))
             Text(text = "Alerta actual: $alertaActual")
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -395,7 +412,7 @@ fun PantallaPrincipal(
             when (sdkStatus) {
                 HealthConnectClient.SDK_AVAILABLE -> {
                     Text(
-                        text = "FC: lectura automática al abrir y cada ${INTERVALO_LECTURA_FC_MS / 60_000} min.",
+                        text = "Envío automático cada ${NetworkingConfig.INTERVALO_ENVIO_AUTOMATICO_MINUTOS} min (app abierta o en segundo plano). Sync Samsung Health → Health Connect.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -412,13 +429,21 @@ fun PantallaPrincipal(
                         onClick = {
                             scope.launch {
                                 val client = clientProvider()
-                                leerYEnviarFrecuenciaCardiaca(
+                                val granted = client.permissionController.getGrantedPermissions()
+                                ejecutarSincronizacionUi(
+                                    context = appContext,
                                     client = client,
-                                    permissions = permissions,
+                                    permisosOk = permissions.all { it in granted },
+                                    forzarEnvio = true,
+                                    manual = true,
                                     horaActual = ::horaActual,
                                     historial = historial,
                                     onHeartRateText = { heartRateText = it },
                                     onPasosText = { pasosText = it },
+                                    onEstresText = { estresText = it },
+                                    onSuenoText = { suenoText = it },
+                                    onActividadText = { actividadText = it },
+                                    onCaloriasText = { caloriasText = it },
                                     onEstado = { estado = it },
                                     onAlerta = { alertaActual = it },
                                     onUltimoEvento = { ultimoEvento = it },
@@ -426,7 +451,7 @@ fun PantallaPrincipal(
                             }
                         }
                     ) {
-                        Text("Leer ahora")
+                        Text("Enviar ahora (manual)")
                     }
                 }
 

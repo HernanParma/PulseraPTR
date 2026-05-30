@@ -11,8 +11,11 @@ public static class DataSeeder
     public static async Task SeedAsync(AppDbContext db, ILogger logger, bool seedDemoData, CancellationToken cancellationToken = default)
     {
         await EnsurePacienteTecnico22PerfilAsync(db, logger, cancellationToken);
+        await EnsureRangosClasificacionAsync(db, logger, cancellationToken);
         await EnsureGlucemiaDemoFechasRecientesAsync(db, logger, cancellationToken);
         await SeedGlucemiaDemoAsync(db, logger, cancellationToken);
+        // Siempre: pacientes demo opcionales (no depende de SeedDemoData; la APK puede seguir en modo real).
+        await EnsurePacientesDemoEstadoVariadoAsync(db, logger, cancellationToken);
 
         if (!seedDemoData)
         {
@@ -60,7 +63,10 @@ public static class DataSeeder
             Activo = true
         };
 
-        db.Pacientes.AddRange(p1, p2, p3);
+        var p4 = CrearPacienteDemoAdvertencia();
+        var p5 = CrearPacienteDemoCritico();
+
+        db.Pacientes.AddRange(p1, p2, p3, p4, p5);
         await db.SaveChangesAsync(cancellationToken);
 
         var mediciones = new List<Medicion>
@@ -157,6 +163,9 @@ public static class DataSeeder
             }
         };
 
+        mediciones.AddRange(CrearMedicionesDemoPaciente(p4.Id, baseFecha.AddDays(1), EstadoClinico.ADVERTENCIA, 108, "FC elevada — supervisar"));
+        mediciones.AddRange(CrearMedicionesDemoPaciente(p5.Id, baseFecha.AddDays(1), EstadoClinico.CRITICO, 132, "Taquicardia severa"));
+
         db.Mediciones.AddRange(mediciones);
 
         var alertas = new List<Alerta>
@@ -196,6 +205,24 @@ public static class DataSeeder
                 Estado = EstadoClinico.CRITICO,
                 Mensaje = "FC crítica",
                 Leida = false
+            },
+            new()
+            {
+                PacienteId = p4.Id,
+                FechaHora = baseFecha.AddDays(1).AddHours(4),
+                TipoAlerta = TipoAlerta.FrecuenciaCardiaca,
+                Estado = EstadoClinico.ADVERTENCIA,
+                Mensaje = "FC elevada — supervisar",
+                Leida = false
+            },
+            new()
+            {
+                PacienteId = p5.Id,
+                FechaHora = baseFecha.AddDays(1).AddHours(4),
+                TipoAlerta = TipoAlerta.FrecuenciaCardiaca,
+                Estado = EstadoClinico.CRITICO,
+                Mensaje = "Taquicardia severa",
+                Leida = false
             }
         };
 
@@ -227,6 +254,27 @@ public static class DataSeeder
 
         await db.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Seed inicial completado.");
+    }
+
+    /// <summary>
+    /// Rangos mínimos para clasificar mediciones de la APK (FC). Sin esto, POST /api/mediciones devuelve 500.
+    /// </summary>
+    private static async Task EnsureRangosClasificacionAsync(AppDbContext db, ILogger logger, CancellationToken cancellationToken)
+    {
+        if (await db.RangoValores.AnyAsync(r => r.TipoMedicion == TipoMedicion.FrecuenciaCardiaca, cancellationToken))
+            return;
+
+        db.RangoValores.Add(new RangoValoresMedicion(
+            TipoMedicion.FrecuenciaCardiaca,
+            rangoEdadMinimo: 18,
+            rangoEdadMaximo: 120,
+            valorNormalMinimo: 60,
+            valorNormalMaximo: 100,
+            valorCriticoMinimo: 50,
+            valorCriticoMaximo: 120));
+
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Rangos de clasificación para frecuencia cardíaca insertados (edad 18-120).");
     }
 
     private static async Task EnsurePacienteTecnico22PerfilAsync(AppDbContext db, ILogger logger, CancellationToken cancellationToken)
@@ -324,5 +372,131 @@ public static class DataSeeder
         await db.GlucoseReadings.AddRangeAsync(readings, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Seed glucemia: {Count} lecturas insertadas.", readings.Count);
+    }
+
+    private const string DniDemoAdvertencia = "22-1000001";
+    private const string DniDemoCritico = "22-1000002";
+
+    /// <summary>
+    /// Añade pacientes demo con última medición en ADVERTENCIA/CRÍTICO (bases que ya tenían el seed inicial).
+    /// </summary>
+    private static async Task EnsurePacientesDemoEstadoVariadoAsync(
+        AppDbContext db,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        if (await db.Pacientes.AnyAsync(p => p.Dni == DniDemoAdvertencia || p.Dni == DniDemoCritico, cancellationToken))
+            return;
+
+        var ahora = DateTime.UtcNow;
+        var pAdvertencia = CrearPacienteDemoAdvertencia();
+        var pCritico = CrearPacienteDemoCritico();
+        db.Pacientes.AddRange(pAdvertencia, pCritico);
+        await db.SaveChangesAsync(cancellationToken);
+
+        var mediciones = new List<Medicion>();
+        mediciones.AddRange(CrearMedicionesDemoPaciente(
+            pAdvertencia.Id, ahora.AddHours(-6), EstadoClinico.ADVERTENCIA, 108, "FC elevada — supervisar"));
+        mediciones.AddRange(CrearMedicionesDemoPaciente(
+            pCritico.Id, ahora.AddHours(-6), EstadoClinico.CRITICO, 132, "Taquicardia severa"));
+        db.Mediciones.AddRange(mediciones);
+
+        var ultimaAdvertencia = mediciones.Last(m => m.PacienteId == pAdvertencia.Id);
+        var ultimaCritico = mediciones.Last(m => m.PacienteId == pCritico.Id);
+
+        db.Alertas.AddRange(
+            new Alerta
+            {
+                PacienteId = pAdvertencia.Id,
+                FechaHora = ultimaAdvertencia.FechaHora,
+                TipoAlerta = TipoAlerta.FrecuenciaCardiaca,
+                Estado = EstadoClinico.ADVERTENCIA,
+                Mensaje = ultimaAdvertencia.MensajeAlerta ?? "FC elevada",
+                Leida = false
+            },
+            new Alerta
+            {
+                PacienteId = pCritico.Id,
+                FechaHora = ultimaCritico.FechaHora,
+                TipoAlerta = TipoAlerta.FrecuenciaCardiaca,
+                Estado = EstadoClinico.CRITICO,
+                Mensaje = ultimaCritico.MensajeAlerta ?? "Taquicardia severa",
+                Leida = false
+            });
+
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "Pacientes demo añadidos: {Nombre1} (ADVERTENCIA), {Nombre2} (CRÍTICO).",
+            pAdvertencia.Nombre,
+            pCritico.Nombre);
+    }
+
+    private static Paciente CrearPacienteDemoAdvertencia() => new()
+    {
+        Nombre = "Lucía Fernández",
+        Edad = 80,
+        Dni = DniDemoAdvertencia,
+        ContactoEmergencia = "Ana Fernández - 11-8888-1111",
+        Observaciones = "Simulación: última FC en advertencia",
+        Activo = true
+    };
+
+    private static Paciente CrearPacienteDemoCritico() => new()
+    {
+        Nombre = "Alberto Ruiz",
+        Edad = 85,
+        Dni = DniDemoCritico,
+        ContactoEmergencia = "Pedro Ruiz - 11-9999-2222",
+        Observaciones = "Simulación: última FC crítica",
+        Activo = true
+    };
+
+    private static IEnumerable<Medicion> CrearMedicionesDemoPaciente(
+        int pacienteId,
+        DateTime baseUltima,
+        EstadoClinico estadoUltima,
+        int valorUltima,
+        string mensajeUltima)
+    {
+        var normal = estadoUltima == EstadoClinico.NORMAL;
+        yield return new Medicion
+        {
+            PacienteId = pacienteId,
+            FechaHora = baseUltima.AddHours(-4),
+            ValorMedicion = 78,
+            Tipo = TipoMedicion.FrecuenciaCardiaca,
+            Estado = EstadoClinico.NORMAL,
+            MensajeAlerta = "Frecuencia cardíaca normal",
+            OrigenDato = "SeedDemo",
+            EsFueraDeRango = false,
+            PasosActividad = 1200,
+            NivelEstres = 35
+        };
+        yield return new Medicion
+        {
+            PacienteId = pacienteId,
+            FechaHora = baseUltima.AddHours(-2),
+            ValorMedicion = 92,
+            Tipo = TipoMedicion.FrecuenciaCardiaca,
+            Estado = EstadoClinico.NORMAL,
+            MensajeAlerta = "En rango",
+            OrigenDato = "SeedDemo",
+            EsFueraDeRango = false,
+            PasosActividad = 2400,
+            NivelEstres = 42
+        };
+        yield return new Medicion
+        {
+            PacienteId = pacienteId,
+            FechaHora = baseUltima,
+            ValorMedicion = valorUltima,
+            Tipo = TipoMedicion.FrecuenciaCardiaca,
+            Estado = estadoUltima,
+            MensajeAlerta = mensajeUltima,
+            OrigenDato = "SeedDemo",
+            EsFueraDeRango = !normal,
+            PasosActividad = 3100,
+            NivelEstres = estadoUltima == EstadoClinico.CRITICO ? 72 : 58
+        };
     }
 }

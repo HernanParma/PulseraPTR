@@ -63,4 +63,24 @@ public sealed class GlucoseReadingRepository : IGlucoseReadingRepository
             .OrderByDescending(r => r.ReadingDateTime)
             .Take(take)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<GlucoseReading>> BuscarAsync(
+        int? pacienteId,
+        DateTime? fechaDesde,
+        DateTime? fechaHasta,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.GlucoseReadings.AsNoTracking().Include(r => r.Paciente).AsQueryable();
+
+        if (pacienteId.HasValue)
+            query = query.Where(r => r.PacienteId == pacienteId.Value);
+
+        if (fechaDesde.HasValue)
+            query = query.Where(r => r.ReadingDateTime >= fechaDesde.Value);
+
+        if (fechaHasta.HasValue)
+            query = query.Where(r => r.ReadingDateTime <= fechaHasta.Value);
+
+        return await query.OrderByDescending(r => r.ReadingDateTime).ToListAsync(cancellationToken);
+    }
 }

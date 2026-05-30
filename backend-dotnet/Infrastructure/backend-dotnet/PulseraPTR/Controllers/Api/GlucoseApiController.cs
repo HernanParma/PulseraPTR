@@ -28,14 +28,19 @@ public sealed class GlucoseApiController : ControllerBase
     [ProducesResponseType(typeof(GlucoseImportResultDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<GlucoseImportResultDto>> Import(
         [FromQuery(Name = "patientId")] int patientId,
-        [FromForm(Name = "file")] IFormFile file,
+        IFormFile file,
         CancellationToken cancellationToken = default)
     {
         if (file is null || file.Length == 0)
             return BadRequest("Debe adjuntar un archivo CSV (campo multipart \"file\").");
 
         await using var stream = file.OpenReadStream();
-        var result = await _import.ImportMySugrCsvAsync(patientId, stream, file.FileName, cancellationToken);
+        var metadata = new Application.Dtos.Glucose.GlucoseImportMetadata
+        {
+            ImportBatchId = $"upload-{patientId}-{DateTime.UtcNow:yyyyMMddHHmmss}",
+            EmailReceivedAtUtc = DateTime.UtcNow,
+        };
+        var result = await _import.ImportMySugrCsvAsync(patientId, stream, file.FileName, metadata, cancellationToken);
         return Ok(result);
     }
 

@@ -31,5 +31,11 @@ public class GlucoseReading
 
     public DateTime CreatedAt { get; set; }
 
+    /// <summary>Lote de importación (p. ej. un correo con CSV). Agrupa filas en Mediciones.</summary>
+    public string? ImportBatchId { get; set; }
+
+    /// <summary>Fecha/hora en que se recibió el correo (UTC), no la de cada lectura del CSV.</summary>
+    public DateTime? EmailReceivedAtUtc { get; set; }
+
     public Paciente Paciente { get; set; } = null!;
 }
